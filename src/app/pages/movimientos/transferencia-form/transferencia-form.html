@@ -1,0 +1,81 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>local_shipping</mat-icon></span>
+      <div>
+        <h1>Nueva transferencia</h1>
+        <p>Sale de <strong>{{ origen()?.Nombre ?? 'sin almacén' }}</strong> en este momento; el almacén destino debe recibirla.</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <a mat-stroked-button routerLink="/movimientos/transferencias"><mat-icon>arrow_back</mat-icon> Volver</a>
+    </div>
+  </div>
+
+  <div class="contenido">
+    <div class="columna-principal">
+      <section class="tarjeta">
+        <h2>Destino</h2>
+        <div class="rejilla">
+          <mat-form-field>
+            <mat-label>Almacén destino</mat-label>
+            <mat-select [value]="idDestino()" (selectionChange)="idDestino.set($event.value)">
+              @for (a of destinos(); track a.ID_Almacen) {
+                <mat-option [value]="a.ID_Almacen">{{ a.Nombre }}</mat-option>
+              }
+            </mat-select>
+            @if (destinos().length === 0) { <mat-hint>No hay otros almacenes activos</mat-hint> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Observaciones</mat-label>
+            <input matInput maxlength="255" [ngModel]="observaciones()" (ngModelChange)="observaciones.set($event)" />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Productos a enviar</h2>
+        <app-buscador-producto [productos]="disponibles()" etiqueta="Agregar producto con existencia en este almacén"
+                               (seleccionar)="agregar($event)" />
+
+        @if (lineas().length > 0) {
+          <div class="tabla-contenedor">
+            <table class="lineas">
+              <thead>
+                <tr><th>Producto</th><th class="num">Disponible</th><th class="num">Cantidad a enviar</th><th></th></tr>
+              </thead>
+              <tbody>
+                @for (linea of lineas(); track linea.ID_Producto) {
+                  <tr>
+                    <td><strong>{{ linea.NombreProducto }}</strong><div class="sub">{{ linea.CodigoProducto }}</div></td>
+                    <td class="num">{{ linea.Stock | numero }}</td>
+                    <td class="num">
+                      <input class="campo numero" type="number" min="1" [max]="linea.Stock"
+                             [class.invalido]="linea.Cantidad <= 0 || linea.Cantidad > linea.Stock"
+                             [ngModel]="linea.Cantidad" (ngModelChange)="actualizar(linea, $event)" />
+                    </td>
+                    <td class="num"><button mat-icon-button (click)="quitar(linea)" matTooltip="Quitar"><mat-icon>delete_outline</mat-icon></button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="sin-datos"><mat-icon>inventory</mat-icon><p>Agregue los productos que va a trasladar</p></div>
+        }
+      </section>
+    </div>
+
+    <aside class="tarjeta resumen-lateral">
+      <h2>Resumen</h2>
+      <div class="fila"><span>Origen</span><strong>{{ origen()?.Nombre }}</strong></div>
+      <div class="fila"><span>Destino</span><strong>{{ nombreDestino() }}</strong></div>
+      <div class="fila"><span>Productos</span><strong>{{ lineas().length }}</strong></div>
+      <div class="fila total"><span>Unidades</span><span>{{ unidades() | numero }}</span></div>
+      <button mat-flat-button class="guardar" [disabled]="!puedeGuardar()" (click)="guardar()">
+        @if (guardando()) { <mat-spinner diameter="20" /> } @else { <mat-icon>send</mat-icon> }
+        Enviar transferencia
+      </button>
+    </aside>
+  </div>
+</div>

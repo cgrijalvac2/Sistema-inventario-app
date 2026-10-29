@@ -1,0 +1,133 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>{{ config().icono }}</mat-icon></span>
+      <div>
+        <h1>{{ config().titulo }}</h1>
+        <p>{{ config().subtitulo }}</p>
+      </div>
+    </div>
+
+    @if (config().permiteCrear !== false) {
+      <div class="acciones">
+        <button mat-flat-button (click)="nuevo()">
+          <mat-icon>add</mat-icon>
+          Nuevo {{ config().nombreSingular }}
+        </button>
+      </div>
+    }
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-form-field class="buscar">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Buscar..." [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
+        @if (busqueda()) {
+          <button mat-icon-button matSuffix (click)="busqueda.set('')"><mat-icon>close</mat-icon></button>
+        }
+      </mat-form-field>
+
+      @if (tieneEstado()) {
+        <mat-slide-toggle [checked]="mostrarInactivos()" (change)="mostrarInactivos.set($event.checked)">
+          Mostrar inactivos
+        </mat-slide-toggle>
+      }
+
+      <span class="contador texto-suave">
+        {{ activos() }} activos @if (total() !== activos()) { · {{ total() - activos() }} inactivos }
+      </span>
+
+      <button mat-icon-button (click)="cargar()" matTooltip="Actualizar">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort>
+        @for (columna of config().columnas; track columna.campo) {
+          <ng-container [matColumnDef]="columna.campo">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header
+                [class.derecha]="columna.tipo === 'moneda' || columna.tipo === 'numero'">
+              {{ columna.titulo }}
+            </th>
+            <td mat-cell *matCellDef="let fila"
+                [class.derecha]="columna.tipo === 'moneda' || columna.tipo === 'numero'"
+                [class.inactivo]="fila.Estado === false">
+              @switch (columna.tipo) {
+                @case ('moneda') { <span class="monto">{{ fila[columna.campo] | moneda }}</span> }
+                @case ('numero') { <span class="monto">{{ fila[columna.campo] | numero }}</span> }
+                @case ('fecha') { {{ fila[columna.campo] | fecha: true }} }
+                @case ('estado') {
+                  <span class="chip" [class.exito]="fila.Estado" [class.peligro]="!fila.Estado">
+                    {{ fila.Estado ? 'Activo' : 'Inactivo' }}
+                  </span>
+                }
+                @case ('lista') {
+                  <div class="lista">
+                    @for (item of lista(fila, columna).slice(0, 3); track $index) {
+                      <span class="chip primario">{{ item }}</span>
+                    }
+                    @if (lista(fila, columna).length > 3) {
+                      <span class="chip">+{{ lista(fila, columna).length - 3 }}</span>
+                    }
+                    @if (lista(fila, columna).length === 0) { <span class="texto-suave">—</span> }
+                  </div>
+                }
+                @case ('opcion') { {{ textoOpcion(fila, columna) }} }
+                @case ('chip') {
+                  <span class="chip" [class]="'chip ' + (columna.clase ? columna.clase(fila) : '')">
+                    {{ columna.formato ? columna.formato(fila) : fila[columna.campo] }}
+                  </span>
+                }
+                @default {
+                  <span [class.destacado]="columna.destacado">
+                    {{ columna.formato ? columna.formato(fila) : (fila[columna.campo] ?? '—') }}
+                  </span>
+                }
+              }
+            </td>
+          </ng-container>
+        }
+
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="derecha">Acciones</th>
+          <td mat-cell *matCellDef="let fila" class="derecha acciones-fila">
+            <button mat-icon-button (click)="editar(fila)" matTooltip="Editar">
+              <mat-icon>edit</mat-icon>
+            </button>
+            @if (config().estado !== 'ninguno') {
+              @if (fila.Estado !== false) {
+                <button mat-icon-button class="desactivar" (click)="cambiarEstado(fila)" matTooltip="Desactivar">
+                  <mat-icon>block</mat-icon>
+                </button>
+              } @else {
+                <button mat-icon-button class="activar" (click)="cambiarEstado(fila)" matTooltip="Activar">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+              }
+            }
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas()"></tr>
+        <tr mat-row *matRowDef="let fila; columns: columnas()"></tr>
+
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas().length">
+            <div class="sin-datos">
+              <mat-icon>inbox</mat-icon>
+              <p>{{ cargando() ? 'Cargando...' : busqueda() ? 'No hay resultados para "' + busqueda() + '"' : 'Todavía no hay registros' }}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" showFirstLastButtons />
+  </div>
+</div>

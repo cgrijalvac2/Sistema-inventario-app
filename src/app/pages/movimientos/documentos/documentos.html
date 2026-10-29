@@ -1,0 +1,101 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Documentos</h1>
+      <p>Compras, ventas, notas y ajustes registrados. Haga clic en un documento para verlo o anularlo.</p>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-form-field>
+        <mat-label>Tipo</mat-label>
+        <mat-select [value]="tipo()" (selectionChange)="filtrar(tipo, $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (t of listaTipos; track t.codigo) { <mat-option [value]="t.codigo">{{ t.texto }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Estado</mat-label>
+        <mat-select [value]="estado()" (selectionChange)="filtrar(estado, $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option value="REGISTRADA">Registrada</mat-option>
+          <mat-option value="ANULADA">Anulada</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="fechas">
+        <mat-label>Fechas</mat-label>
+        <mat-date-range-input [rangePicker]="rango">
+          <input matStartDate placeholder="Desde" [value]="desde()" (dateChange)="desde.set($event.value)" />
+          <input matEndDate placeholder="Hasta" [value]="hasta()" (dateChange)="filtrar(hasta, $event.value)" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="rango" />
+        <mat-date-range-picker #rango />
+      </mat-form-field>
+
+      <mat-slide-toggle [checked]="soloAlmacen()" (change)="filtrar(soloAlmacen, $event.checked)">
+        Solo {{ almacen() ?? 'mi almacén' }}
+      </mat-slide-toggle>
+
+      <span class="texto-suave" style="margin-left: auto">
+        {{ cantidad() }} documentos · {{ totalRegistrado() | moneda }} registrados
+      </span>
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort matSortActive="Fecha" matSortDirection="desc">
+        <ng-container matColumnDef="NumeroDocumento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Número</th>
+          <td mat-cell *matCellDef="let d"><strong>{{ d.NumeroDocumento }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="CodigoTipoTransaccion">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+          <td mat-cell *matCellDef="let d"><span class="chip {{ infoTipo(d).clase }}">{{ infoTipo(d).texto }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="Fecha">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let d">{{ d.Fecha | fecha: true }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Tercero">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Cliente / proveedor</th>
+          <td mat-cell *matCellDef="let d">
+            {{ d.Cliente ?? d.Proveedor ?? '—' }}
+            @if (d.DocumentoOrigen) { <div class="texto-suave">corrige {{ d.DocumentoOrigen }}</div> }
+            @if (d.NumeroOrden) { <div class="texto-suave">orden {{ d.NumeroOrden }}</div> }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="Almacen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Almacén</th>
+          <td mat-cell *matCellDef="let d">{{ d.Almacen }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Total">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Total</th>
+          <td mat-cell *matCellDef="let d" class="derecha monto">{{ d.Total | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Estado">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+          <td mat-cell *matCellDef="let d"><span class="chip {{ estados[d.Estado] }}">{{ d.Estado }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let d" class="derecha">
+            <button mat-icon-button matTooltip="Ver detalle" (click)="ver(d)"><mat-icon>visibility</mat-icon></button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let d; columns: columnas" (dblclick)="ver(d)" style="cursor: pointer"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas.length">
+            <div class="sin-datos"><mat-icon>description</mat-icon><p>No hay documentos con esos filtros</p></div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" showFirstLastButtons />
+  </div>
+</div>

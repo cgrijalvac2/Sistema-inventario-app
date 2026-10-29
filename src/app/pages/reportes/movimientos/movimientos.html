@@ -1,0 +1,104 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Entradas y salidas</h1>
+      <p>Registro de todos los movimientos de inventario (compras, ventas, notas, ajustes y transferencias).</p>
+    </div>
+    <div class="acciones">
+      <button mat-stroked-button (click)="exportar()"><mat-icon>download</mat-icon> Exportar a Excel</button>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-button-toggle-group [value]="tipo()" (change)="tipo.set($event.value); cargar()" hideSingleSelectionIndicator>
+        <mat-button-toggle [value]="null">Todos</mat-button-toggle>
+        <mat-button-toggle value="ENTRADA"><mat-icon>south_west</mat-icon> Entradas</mat-button-toggle>
+        <mat-button-toggle value="SALIDA"><mat-icon>north_east</mat-icon> Salidas</mat-button-toggle>
+      </mat-button-toggle-group>
+
+      <mat-form-field>
+        <mat-label>Almacén</mat-label>
+        <mat-select [value]="idAlmacen()" (selectionChange)="idAlmacen.set($event.value); cargar()">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (a of almacenes(); track a.ID_Almacen) { <mat-option [value]="a.ID_Almacen">{{ a.Nombre }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="fechas">
+        <mat-label>Fechas</mat-label>
+        <mat-date-range-input [rangePicker]="rango">
+          <input matStartDate placeholder="Desde" [value]="desde()" (dateChange)="desde.set($event.value)" />
+          <input matEndDate placeholder="Hasta" [value]="hasta()" (dateChange)="hasta.set($event.value); cargar()" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="rango" />
+        <mat-date-range-picker #rango />
+      </mat-form-field>
+
+      <span style="margin-left: auto; display: flex; gap: 8px">
+        <span class="chip exito">+{{ entradas() | numero }} entradas</span>
+        <span class="chip peligro">−{{ salidas() | numero }} salidas</span>
+      </span>
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort>
+        <ng-container matColumnDef="FechaRegistro">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let m">{{ m.FechaRegistro | fecha: true }}</td>
+        </ng-container>
+        <ng-container matColumnDef="TipoMovimiento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Tipo</th>
+          <td mat-cell *matCellDef="let m">
+            <span class="chip" [class.exito]="m.TipoMovimiento === 'ENTRADA'" [class.peligro]="m.TipoMovimiento === 'SALIDA'">{{ m.TipoMovimiento }}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="Documento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Documento</th>
+          <td mat-cell *matCellDef="let m"><strong>{{ m.Documento }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="Concepto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Concepto</th>
+          <td mat-cell *matCellDef="let m" class="texto-suave">{{ m.Concepto }}</td>
+        </ng-container>
+        <ng-container matColumnDef="NombreProducto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Producto</th>
+          <td mat-cell *matCellDef="let m">{{ m.NombreProducto }}<div class="texto-suave">{{ m.CodigoProducto }}</div></td>
+        </ng-container>
+        <ng-container matColumnDef="Almacen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Almacén</th>
+          <td mat-cell *matCellDef="let m">{{ m.Almacen }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Cantidad">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Cantidad</th>
+          <td mat-cell *matCellDef="let m" class="derecha">
+            <strong [style.color]="m.Entrada ? 'var(--app-exito)' : 'var(--app-peligro)'">{{ m.Entrada ? '+' + m.Entrada : '−' + m.Salida }}</strong>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="CostoUnitario">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Costo</th>
+          <td mat-cell *matCellDef="let m" class="derecha monto">{{ m.CostoUnitario | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="SaldoActual_Almacen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Saldo</th>
+          <td mat-cell *matCellDef="let m" class="derecha">{{ m.SaldoAnterior_Almacen }} → <strong>{{ m.SaldoActual_Almacen }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="Usuario">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Usuario</th>
+          <td mat-cell *matCellDef="let m" class="texto-suave">{{ m.Usuario }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let m; columns: columnas"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas.length">
+            <div class="sin-datos"><mat-icon>swap_vert</mat-icon><p>No hay movimientos con esos filtros</p></div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[25, 50, 100]" [pageSize]="25" showFirstLastButtons />
+  </div>
+</div>

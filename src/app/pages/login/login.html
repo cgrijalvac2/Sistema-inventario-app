@@ -1,0 +1,64 @@
+<div class="login">
+  <section class="presentacion">
+    <div class="marca">
+      <span class="logo"><mat-icon>inventory_2</mat-icon></span>
+      <strong>Inventario</strong>
+    </div>
+
+    <div class="mensaje">
+      <h1>Controle su inventario en tiempo real</h1>
+      <p>Compras, ventas, transferencias y existencias de todos sus almacenes en un solo lugar.</p>
+
+      <ul>
+        <li><mat-icon>check_circle</mat-icon> Kardex automático por producto y almacén</li>
+        <li><mat-icon>check_circle</mat-icon> Alertas de stock bajo</li>
+        <li><mat-icon>check_circle</mat-icon> Notas de crédito, débito y anulaciones</li>
+      </ul>
+    </div>
+
+    <small>Desarrollo Web · Universidad Mariano Gálvez de Guatemala</small>
+  </section>
+
+  <section class="formulario">
+    <form [formGroup]="form" (ngSubmit)="ingresar()">
+      <h2>Bienvenido</h2>
+      <p class="texto-suave">Ingrese sus credenciales para continuar</p>
+
+      @if (error()) {
+        <div class="error">
+          <mat-icon>error</mat-icon>
+          {{ error() }}
+        </div>
+      }
+
+      <mat-form-field class="ancho-completo">
+        <mat-label>Correo electrónico</mat-label>
+        <mat-icon matPrefix>mail</mat-icon>
+        <input matInput formControlName="correo" type="email" autocomplete="username" />
+        @if (form.controls.correo.hasError('email')) {
+          <mat-error>El correo no es válido</mat-error>
+        } @else {
+          <mat-error>El correo es requerido</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="ancho-completo">
+        <mat-label>Contraseña</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput formControlName="password" [type]="verPassword() ? 'text' : 'password'" autocomplete="current-password" />
+        <button mat-icon-button matSuffix type="button" (click)="verPassword.set(!verPassword())">
+          <mat-icon>{{ verPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+        <mat-error>La contraseña es requerida</mat-error>
+      </mat-form-field>
+
+      <button mat-flat-button class="ingresar" type="submit" [disabled]="cargando()">
+        @if (cargando()) {
+          <mat-spinner diameter="20" />
+        } @else {
+          Iniciar sesión
+        }
+      </button>
+    </form>
+  </section>
+</div>

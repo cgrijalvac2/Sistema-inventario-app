@@ -1,0 +1,55 @@
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.almacen {
+  padding: 16px 20px;
+
+  .nombre {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    margin-bottom: 12px;
+
+    mat-icon {
+      color: var(--app-primario);
+    }
+  }
+
+  .cifras {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+
+    div {
+      display: flex;
+      flex-direction: column;
+    }
+
+    small {
+      color: var(--app-texto-suave);
+      font-size: 12px;
+    }
+
+    strong {
+      font-size: 17px;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.totales {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+tr.fila-baja td {
+  background: #fff8f6;
+}

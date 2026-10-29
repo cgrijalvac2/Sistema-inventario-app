@@ -1,0 +1,237 @@
+@use '@angular/material' as mat;
+
+// ===================== TEMA DE ANGULAR MATERIAL =====================
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: (
+      primary: mat.$azure-palette,
+      tertiary: mat.$violet-palette,
+    ),
+    typography: (
+      plain-family: 'Inter, Roboto, "Segoe UI", sans-serif',
+      brand-family: 'Inter, Roboto, "Segoe UI", sans-serif',
+    ),
+    density: -1,
+  ));
+
+  // Colores propios de la aplicación
+  --app-fondo: #f3f5f9;
+  --app-tarjeta: #ffffff;
+  --app-borde: #e3e7ee;
+  --app-texto: #1d2433;
+  --app-texto-suave: #667085;
+  --app-primario: #1f6feb;
+  --app-primario-suave: #e8f0fe;
+  --app-sidebar: #111827;
+  --app-sidebar-texto: #c3cad6;
+  --app-exito: #12805c;
+  --app-exito-suave: #e3f6ee;
+  --app-peligro: #c4320a;
+  --app-peligro-suave: #fdece6;
+  --app-alerta: #b54708;
+  --app-alerta-suave: #fef3e2;
+  --app-info: #6941c6;
+  --app-info-suave: #f1ecfd;
+  --app-radio: 14px;
+  --app-sombra: 0 1px 2px rgba(16, 24, 40, .05), 0 1px 3px rgba(16, 24, 40, .08);
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: Inter, Roboto, 'Segoe UI', sans-serif;
+  background: var(--app-fondo);
+  color: var(--app-texto);
+  -webkit-font-smoothing: antialiased;
+}
+
+// ===================== CLASES REUTILIZABLES =====================
+
+// Contenedor de cada página
+.pagina {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+// Encabezado de página: título a la izquierda, acciones a la derecha
+.encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+
+  p {
+    margin: 4px 0 0;
+    color: var(--app-texto-suave);
+    font-size: 14px;
+  }
+
+  .acciones {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+}
+
+.tarjeta {
+  background: var(--app-tarjeta);
+  border: 1px solid var(--app-borde);
+  border-radius: var(--app-radio);
+  box-shadow: var(--app-sombra);
+  padding: 20px;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+// Barra de filtros encima de las tablas
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  mat-form-field {
+    width: 220px;
+  }
+
+  .fechas {
+    width: 270px;
+  }
+
+  .buscar {
+    flex: 1;
+    min-width: 220px;
+    max-width: 380px;
+  }
+}
+
+// Tablas
+.tabla-contenedor {
+  overflow-x: auto;
+  border: 1px solid var(--app-borde);
+  border-radius: 12px;
+
+  table {
+    width: 100%;
+  }
+
+  th.mat-mdc-header-cell {
+    background: #f8f9fc;
+    color: var(--app-texto-suave);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  tr.mat-mdc-row:hover td {
+    background: #fafbfd;
+  }
+
+  .derecha {
+    text-align: right;
+  }
+}
+
+.sin-datos {
+  text-align: center;
+  padding: 40px 16px;
+  color: var(--app-texto-suave);
+
+  mat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    opacity: .5;
+  }
+}
+
+// Chips de estado (Activo, Anulada, Pendiente...)
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: #eef0f4;
+  color: #475467;
+
+  &.exito { background: var(--app-exito-suave); color: var(--app-exito); }
+  &.peligro { background: var(--app-peligro-suave); color: var(--app-peligro); }
+  &.alerta { background: var(--app-alerta-suave); color: var(--app-alerta); }
+  &.info { background: var(--app-info-suave); color: var(--app-info); }
+  &.primario { background: var(--app-primario-suave); color: var(--app-primario); }
+}
+
+.texto-suave {
+  color: var(--app-texto-suave);
+}
+
+.monto {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+// Formularios en rejilla: 2 columnas en pantalla grande, 1 en celular
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+
+  .completo {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 700px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ancho-completo {
+  width: 100%;
+}
+
+// Snackbars de notificación
+.snack-exito {
+  --mat-snack-bar-container-color: #0f5132;
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #a7f3d0;
+}
+
+.snack-error {
+  --mat-snack-bar-container-color: #8a1c03;
+  --mat-snack-bar-supporting-text-color: #fff;
+  --mat-snack-bar-button-color: #fecaca;
+}
+
+// Diálogos
+.mat-mdc-dialog-container {
+  --mat-dialog-container-shape: 18px;
+}

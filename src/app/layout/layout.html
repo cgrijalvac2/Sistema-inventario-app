@@ -1,0 +1,81 @@
+<mat-sidenav-container class="contenedor">
+  <mat-sidenav
+    class="sidebar"
+    [mode]="esMovil() ? 'over' : 'side'"
+    [opened]="menuAbierto()"
+    (closedStart)="menuAbierto.set(false)">
+
+    <a class="marca" routerLink="/inicio" (click)="alNavegar()">
+      <span class="logo"><mat-icon>inventory_2</mat-icon></span>
+      <span>
+        <strong>Inventario</strong>
+        <small>Sistema de gestión</small>
+      </span>
+    </a>
+
+    <nav>
+      @for (seccion of menu(); track seccion.titulo) {
+        <p class="seccion">{{ seccion.titulo }}</p>
+        @for (opcion of seccion.opciones; track opcion.ruta) {
+          <a class="opcion" [routerLink]="opcion.ruta" routerLinkActive="activa" (click)="alNavegar()">
+            <mat-icon>{{ opcion.icono }}</mat-icon>
+            <span>{{ opcion.texto }}</span>
+          </a>
+        }
+      }
+    </nav>
+  </mat-sidenav>
+
+  <mat-sidenav-content class="contenido">
+    <header class="barra">
+      <button mat-icon-button (click)="menuAbierto.set(!menuAbierto())" matTooltip="Mostrar u ocultar menú">
+        <mat-icon>menu</mat-icon>
+      </button>
+
+      <h2 class="titulo">{{ titulo() }}</h2>
+
+      <div class="derecha">
+        <!-- Almacén en el que se registran los movimientos -->
+        <mat-form-field class="selector-almacen" subscriptSizing="dynamic">
+          <mat-icon matPrefix>warehouse</mat-icon>
+          <mat-select [value]="auth.idAlmacen()" (selectionChange)="cambiarAlmacen($event.value)" placeholder="Almacén">
+            @for (almacen of auth.almacenes(); track almacen.ID_Almacen) {
+              <mat-option [value]="almacen.ID_Almacen">{{ almacen.Nombre }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <button class="usuario" [matMenuTriggerFor]="menuUsuario">
+          <span class="avatar">{{ iniciales() }}</span>
+          <span class="datos">
+            <strong>{{ auth.sesion()?.NombreCompleto }}</strong>
+            <small>{{ auth.sesion()?.NombreRol }}</small>
+          </span>
+          <mat-icon>expand_more</mat-icon>
+        </button>
+
+        <mat-menu #menuUsuario="matMenu" xPosition="before">
+          <div class="menu-encabezado">
+            <strong>{{ auth.sesion()?.NombreCompleto }}</strong>
+            <small>{{ auth.sesion()?.CorreoElectronico }}</small>
+          </div>
+          <button mat-menu-item (click)="auth.logout()">
+            <mat-icon>logout</mat-icon>
+            <span>Cerrar sesión</span>
+          </button>
+        </mat-menu>
+      </div>
+    </header>
+
+    @if (!auth.almacenActual()) {
+      <div class="aviso">
+        <mat-icon>info</mat-icon>
+        Su usuario no tiene almacenes asignados. Pida a un administrador que le asigne uno para registrar movimientos.
+      </div>
+    }
+
+    <main>
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

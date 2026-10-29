@@ -1,0 +1,66 @@
+@if (doc(); as d) {
+  <h2 mat-dialog-title class="titulo">
+    <span>{{ d.NumeroDocumento }}</span>
+    <span class="chip {{ tipos[d.CodigoTipoTransaccion].clase }}">{{ d.TipoTransaccion }}</span>
+    <span class="chip {{ estados[d.Estado] }}">{{ d.Estado }}</span>
+  </h2>
+
+  <mat-dialog-content>
+    <div class="datos">
+      <div><small>Fecha</small><span>{{ d.Fecha | fecha: true }}</span></div>
+      <div><small>Almacén</small><span>{{ d.Almacen }}</span></div>
+      <div><small>Registró</small><span>{{ d.Usuario }}</span></div>
+      @if (d.Cliente) { <div><small>Cliente</small><span>{{ d.Cliente }}</span></div> }
+      @if (d.Proveedor) { <div><small>Proveedor</small><span>{{ d.Proveedor }}</span></div> }
+      @if (d.NumeroOrden) { <div><small>Orden de compra</small><span>{{ d.NumeroOrden }}</span></div> }
+      @if (d.DocumentoOrigen) { <div><small>Corrige a</small><span>{{ d.DocumentoOrigen }}</span></div> }
+      @if (d.Referencia) { <div><small>Referencia</small><span>{{ d.Referencia }}</span></div> }
+      @if (d.FechaAnulacion) { <div><small>Anulado el</small><span>{{ d.FechaAnulacion | fecha: true }}</span></div> }
+    </div>
+
+    @if (d.Observaciones) {
+      <p class="observaciones"><mat-icon>notes</mat-icon> {{ d.Observaciones }}</p>
+    }
+
+    <table class="detalle">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          @if (d.Detalles[0]?.Motivo) { <th>Motivo</th> }
+          <th class="num">Cant.</th>
+          <th class="num">Precio</th>
+          <th class="num">Desc.</th>
+          <th class="num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of d.Detalles; track l.ID_Detalle) {
+          <tr>
+            <td><strong>{{ l.NombreProducto }}</strong><div class="texto-suave">{{ l.CodigoProducto }}</div></td>
+            @if (d.Detalles[0]?.Motivo) { <td>{{ l.Motivo }}</td> }
+            <td class="num">{{ l.Cantidad | numero }}</td>
+            <td class="num monto">{{ l.PrecioUnitario | moneda }}</td>
+            <td class="num monto">{{ l.Descuento | moneda }}</td>
+            <td class="num monto">{{ l.Total | moneda }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="totales">
+      <div><span>Subtotal</span><span class="monto">{{ d.Subtotal | moneda }}</span></div>
+      <div><span>Descuento</span><span class="monto">- {{ d.Descuento | moneda }}</span></div>
+      <div><span>IVA</span><span class="monto">{{ d.Impuesto | moneda }}</span></div>
+      <div class="total"><span>Total</span><span class="monto">{{ d.Total | moneda }}</span></div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    @if (puedeAnular(d)) {
+      <button mat-button class="anular" (click)="anular(d)"><mat-icon>block</mat-icon> Anular</button>
+    }
+    <button mat-flat-button mat-dialog-close>Cerrar</button>
+  </mat-dialog-actions>
+} @else {
+  <mat-dialog-content><mat-progress-bar mode="indeterminate" /></mat-dialog-content>
+}

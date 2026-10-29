@@ -1,0 +1,142 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>{{ saludo() }}</h1>
+      <p>Resumen de {{ soloAlmacen() ? (auth.almacenActual()?.Nombre ?? 'su almacén') : 'todos los almacenes' }}</p>
+    </div>
+    <div class="acciones">
+      <mat-button-toggle-group [value]="soloAlmacen()" (change)="cambiarAlcance($event.value)" hideSingleSelectionIndicator>
+        <mat-button-toggle [value]="true">Este almacén</mat-button-toggle>
+        <mat-button-toggle [value]="false">Todos</mat-button-toggle>
+      </mat-button-toggle-group>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="rapidos">
+    @if (auth.tienePermiso('VENTAS')) {
+      <a class="rapido" routerLink="/movimientos/venta"><mat-icon>point_of_sale</mat-icon> Nueva venta</a>
+    }
+    @if (auth.tienePermiso('COMPRAS')) {
+      <a class="rapido" routerLink="/movimientos/compra"><mat-icon>shopping_cart</mat-icon> Nueva compra</a>
+      <a class="rapido" routerLink="/movimientos/ordenes-compra/nueva"><mat-icon>assignment</mat-icon> Orden de compra</a>
+    }
+    @if (auth.tienePermiso('TRANSFERENCIAS')) {
+      <a class="rapido" routerLink="/movimientos/transferencias/nueva"><mat-icon>local_shipping</mat-icon> Transferencia</a>
+    }
+    @if (auth.tienePermiso('AJUSTES')) {
+      <a class="rapido" routerLink="/movimientos/ajuste"><mat-icon>tune</mat-icon> Ajuste</a>
+    }
+  </div>
+
+  @if (cargando()) {
+    <mat-progress-bar mode="indeterminate" />
+  }
+
+  @if (indicadores(); as i) {
+    <div class="indicadores">
+      <div class="indicador azul">
+        <span class="icono"><mat-icon>payments</mat-icon></span>
+        <div>
+          <small>Ventas de hoy</small>
+          <strong>{{ i.VentasHoy | moneda }}</strong>
+        </div>
+      </div>
+      <div class="indicador verde">
+        <span class="icono"><mat-icon>trending_up</mat-icon></span>
+        <div>
+          <small>Ventas del mes</small>
+          <strong>{{ i.VentasMes | moneda }}</strong>
+          <span class="detalle">{{ i.CantidadVentasMes }} ventas</span>
+        </div>
+      </div>
+      <div class="indicador morado">
+        <span class="icono"><mat-icon>shopping_bag</mat-icon></span>
+        <div>
+          <small>Compras del mes</small>
+          <strong>{{ i.ComprasMes | moneda }}</strong>
+        </div>
+      </div>
+      <div class="indicador naranja">
+        <span class="icono"><mat-icon>account_balance_wallet</mat-icon></span>
+        <div>
+          <small>Valor del inventario</small>
+          <strong>{{ i.ValorInventario | moneda }}</strong>
+          <span class="detalle">{{ i.ProductosActivos }} productos activos</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pendientes">
+      <a class="pendiente" routerLink="/reportes/existencias" [class.atencion]="i.ProductosStockBajo > 0">
+        <mat-icon>warning_amber</mat-icon>
+        <span><strong>{{ i.ProductosStockBajo }}</strong> productos con stock bajo</span>
+        <mat-icon class="flecha">chevron_right</mat-icon>
+      </a>
+      <a class="pendiente" routerLink="/movimientos/transferencias" [class.atencion]="i.TransferenciasPorRecibir > 0">
+        <mat-icon>local_shipping</mat-icon>
+        <span><strong>{{ i.TransferenciasPorRecibir }}</strong> transferencias por recibir</span>
+        <mat-icon class="flecha">chevron_right</mat-icon>
+      </a>
+      <a class="pendiente" routerLink="/movimientos/ordenes-compra" [class.atencion]="i.OrdenesPendientes > 0">
+        <mat-icon>assignment</mat-icon>
+        <span><strong>{{ i.OrdenesPendientes }}</strong> órdenes de compra pendientes</span>
+        <mat-icon class="flecha">chevron_right</mat-icon>
+      </a>
+    </div>
+  }
+
+  <div class="paneles">
+    <section class="tarjeta grafica">
+      <div class="panel-titulo">
+        <h2>Ventas de los últimos 7 días</h2>
+        <span class="chip primario">{{ totalSemana() | moneda }}</span>
+      </div>
+      <div class="barras">
+        @for (dia of barras(); track dia.Fecha) {
+          <div class="columna">
+            <span class="valor">{{ dia.Total > 0 ? (dia.Total | moneda) : '' }}</span>
+            <div class="barra" [style.height.%]="dia.altura" [title]="(dia.Total | moneda)"></div>
+            <span class="dia">{{ dia.etiqueta }}</span>
+          </div>
+        }
+      </div>
+    </section>
+
+    <section class="tarjeta">
+      <h2>Más vendidos del mes</h2>
+      @for (producto of top(); track producto.ID_Producto; let n = $index) {
+        <div class="top">
+          <span class="posicion">{{ n + 1 }}</span>
+          <div class="top-datos">
+            <div class="top-nombre">
+              <span>{{ producto.NombreProducto }}</span>
+              <strong>{{ producto.Cantidad | numero }} u.</strong>
+            </div>
+            <div class="progreso"><span [style.width.%]="(producto.Cantidad / maximoTop()) * 100"></span></div>
+          </div>
+        </div>
+      } @empty {
+        <div class="sin-datos"><mat-icon>bar_chart</mat-icon><p>Aún no hay ventas este mes</p></div>
+      }
+    </section>
+  </div>
+
+  <section class="tarjeta stock">
+    <div class="panel-titulo">
+      <h2>Alertas de stock bajo</h2>
+      <a mat-button routerLink="/reportes/existencias">Ver existencias <mat-icon iconPositionEnd>arrow_forward</mat-icon></a>
+    </div>
+    @for (item of stockBajo(); track item.ID_Almacen + '-' + item.ID_Producto) {
+      <div class="alerta">
+        <div>
+          <strong>{{ item.NombreProducto }}</strong>
+          <span class="texto-suave"> · {{ item.CodigoProducto }} · {{ item.Almacen }}</span>
+        </div>
+        <span class="chip peligro">{{ item.StockActual }} de mín. {{ item.StockMinimo }}</span>
+      </div>
+    } @empty {
+      <div class="sin-datos"><mat-icon>verified</mat-icon><p>Ningún producto está por debajo de su stock mínimo</p></div>
+    }
+  </section>
+</div>

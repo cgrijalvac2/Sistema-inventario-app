@@ -1,0 +1,125 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Existencias</h1>
+      <p>Cuánto hay de cada producto en cada almacén y cuánto vale.</p>
+    </div>
+    <div class="acciones">
+      <button mat-stroked-button (click)="exportar()"><mat-icon>download</mat-icon> Exportar a Excel</button>
+    </div>
+  </div>
+
+  <!-- Resumen por almacén -->
+  <div class="resumen">
+    @for (r of resumenFiltrado(); track r.ID_Almacen) {
+      <div class="tarjeta almacen">
+        <div class="nombre"><mat-icon>warehouse</mat-icon> {{ r.Almacen }}</div>
+        <div class="cifras">
+          <div><small>Productos</small><strong>{{ r.Productos | numero }}</strong></div>
+          <div><small>Unidades</small><strong>{{ r.Unidades | numero }}</strong></div>
+          <div><small>Valor</small><strong>{{ r.ValorInventario | moneda }}</strong></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-form-field class="buscar">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Código o nombre" [value]="buscar()" (input)="buscar.set($any($event.target).value); aplicarFiltro()" />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Almacén</mat-label>
+        <mat-select [value]="idAlmacen()" (selectionChange)="idAlmacen.set($event.value); cargar()">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (a of almacenes(); track a.ID_Almacen) { <mat-option [value]="a.ID_Almacen">{{ a.Nombre }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Categoría</mat-label>
+        <mat-select [value]="idCategoria()" (selectionChange)="idCategoria.set($event.value); cargar()">
+          <mat-option [value]="null">Todas</mat-option>
+          @for (c of categorias(); track c.ID_Categoria) { <mat-option [value]="c.ID_Categoria">{{ c.NombreCategoria }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Alerta</mat-label>
+        <mat-select [value]="alerta()" (selectionChange)="alerta.set($event.value); aplicarFiltro()">
+          <mat-option [value]="null">Todas</mat-option>
+          <mat-option value="BAJO">Stock bajo</mat-option>
+          <mat-option value="NORMAL">Normal</mat-option>
+          <mat-option value="EXCESO">Exceso</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-slide-toggle [checked]="soloConStock()" (change)="soloConStock.set($event.checked); cargar()">Solo con existencia</mat-slide-toggle>
+
+      <span class="texto-suave totales">
+        @if (bajos() > 0) { <span class="chip peligro">{{ bajos() }} con stock bajo</span> }
+        Valor: <strong>{{ valorTotal() | moneda }}</strong>
+      </span>
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort>
+        <ng-container matColumnDef="CodigoProducto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+          <td mat-cell *matCellDef="let e"><strong>{{ e.CodigoProducto }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="NombreProducto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Producto</th>
+          <td mat-cell *matCellDef="let e">{{ e.NombreProducto }} <span class="texto-suave">({{ e.UnidadMedida }})</span></td>
+        </ng-container>
+        <ng-container matColumnDef="Categoria">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoría</th>
+          <td mat-cell *matCellDef="let e">{{ e.Categoria }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Almacen">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Almacén</th>
+          <td mat-cell *matCellDef="let e">{{ e.Almacen }}</td>
+        </ng-container>
+        <ng-container matColumnDef="StockActual">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Existencia</th>
+          <td mat-cell *matCellDef="let e" class="derecha"><strong>{{ e.StockActual | numero }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="StockMinimo">
+          <th mat-header-cell *matHeaderCellDef class="derecha">Mín / Máx</th>
+          <td mat-cell *matCellDef="let e" class="derecha texto-suave">{{ e.StockMinimo || '—' }} / {{ e.StockMaximo || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Costo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Costo prom.</th>
+          <td mat-cell *matCellDef="let e" class="derecha monto">{{ e.Costo | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="ValorInventario">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Valor</th>
+          <td mat-cell *matCellDef="let e" class="derecha monto">{{ e.ValorInventario | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Alerta">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Alerta</th>
+          <td mat-cell *matCellDef="let e"><span class="chip {{ claseAlerta(e.Alerta) }}">{{ e.Alerta }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let e" class="derecha">
+            <button mat-icon-button matTooltip="Definir stock mínimo y máximo" (click)="limites(e)"><mat-icon>tune</mat-icon></button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let e; columns: columnas" [class.fila-baja]="e.Alerta === 'BAJO'"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas.length">
+            <div class="sin-datos"><mat-icon>inventory</mat-icon><p>No hay existencias con esos filtros</p></div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" [pageSize]="25" showFirstLastButtons />
+  </div>
+</div>

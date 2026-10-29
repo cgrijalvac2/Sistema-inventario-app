@@ -1,0 +1,51 @@
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  .icono {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--app-primario-suave);
+    color: var(--app-primario);
+  }
+}
+
+.contador {
+  margin-left: auto;
+  font-size: 13px;
+}
+
+.lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.destacado {
+  font-weight: 600;
+}
+
+td.inactivo {
+  opacity: .55;
+}
+
+.acciones-fila {
+  white-space: nowrap;
+
+  .desactivar mat-icon {
+    color: var(--app-peligro);
+  }
+
+  .activar mat-icon {
+    color: var(--app-exito);
+  }
+}
+
+mat-progress-bar {
+  margin-bottom: 8px;
+  border-radius: 4px;
+}

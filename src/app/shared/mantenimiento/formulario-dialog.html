@@ -1,0 +1,87 @@
+<h2 mat-dialog-title class="titulo">
+  <mat-icon>{{ esNuevo ? 'add_circle' : 'edit' }}</mat-icon>
+  {{ esNuevo ? 'Nuevo' : 'Editar' }} {{ datos.config.nombreSingular }}
+</h2>
+
+<form [formGroup]="form" (ngSubmit)="guardar()">
+  <mat-dialog-content>
+    <div class="rejilla">
+      @for (campo of campos; track campo.nombre) {
+        <div [class.completo]="campo.ancho === 'completo' || campo.tipo === 'textarea' || campo.tipo === 'multiselect'">
+          @switch (campo.tipo) {
+            @case ('checkbox') {
+              <div class="checkbox">
+                <mat-checkbox [formControlName]="campo.nombre">{{ campo.etiqueta }}</mat-checkbox>
+              </div>
+            }
+            @case ('textarea') {
+              <mat-form-field class="ancho-completo">
+                <mat-label>{{ campo.etiqueta }}</mat-label>
+                <textarea matInput rows="2" [formControlName]="campo.nombre" [attr.maxlength]="campo.maxLength"></textarea>
+                @if (campo.ayuda) { <mat-hint>{{ campo.ayuda }}</mat-hint> }
+              </mat-form-field>
+            }
+            @case ('select') {
+              <mat-form-field class="ancho-completo">
+                <mat-label>{{ campo.etiqueta }}</mat-label>
+                <mat-select [formControlName]="campo.nombre">
+                  @for (opcion of opcionesDe(campo); track opcion.valor) {
+                    <mat-option [value]="opcion.valor">{{ opcion.texto }}</mat-option>
+                  }
+                </mat-select>
+                @if (campo.ayuda) { <mat-hint>{{ campo.ayuda }}</mat-hint> }
+                <mat-error>Seleccione una opción</mat-error>
+              </mat-form-field>
+            }
+            @case ('multiselect') {
+              <mat-form-field class="ancho-completo">
+                <mat-label>{{ campo.etiqueta }}</mat-label>
+                <mat-select [formControlName]="campo.nombre" multiple>
+                  @for (opcion of opcionesDe(campo); track opcion.valor) {
+                    <mat-option [value]="opcion.valor">{{ opcion.texto }}</mat-option>
+                  }
+                </mat-select>
+                @if (campo.ayuda) { <mat-hint>{{ campo.ayuda }}</mat-hint> }
+                <mat-error>Seleccione al menos una opción</mat-error>
+              </mat-form-field>
+            }
+            @default {
+              <mat-form-field class="ancho-completo">
+                <mat-label>{{ campo.etiqueta }}</mat-label>
+                @if (campo.tipo === 'decimal') { <span matTextPrefix>Q&nbsp;</span> }
+                <input matInput [formControlName]="campo.nombre"
+                       [type]="campo.tipo === 'numero' || campo.tipo === 'decimal' ? 'number' : campo.tipo === 'texto' ? 'text' : campo.tipo"
+                       [attr.step]="campo.tipo === 'decimal' ? '0.01' : campo.tipo === 'numero' ? '1' : null"
+                       [attr.maxlength]="campo.maxLength"
+                       [style.text-transform]="campo.mayusculas ? 'uppercase' : null"
+                       [attr.autocomplete]="campo.tipo === 'password' ? 'new-password' : 'off'" />
+                @if (campo.ayuda) { <mat-hint>{{ campo.ayuda }}</mat-hint> }
+                @if (form.get(campo.nombre)?.hasError('email')) {
+                  <mat-error>El correo no es válido</mat-error>
+                } @else if (form.get(campo.nombre)?.hasError('minlength')) {
+                  <mat-error>Mínimo {{ campo.minLength }} caracteres</mat-error>
+                } @else if (form.get(campo.nombre)?.hasError('min')) {
+                  <mat-error>No puede ser negativo</mat-error>
+                } @else {
+                  <mat-error>Este campo es requerido</mat-error>
+                }
+              </mat-form-field>
+            }
+          }
+        </div>
+      }
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions align="end">
+    <button mat-button type="button" mat-dialog-close [disabled]="guardando()">Cancelar</button>
+    <button mat-flat-button type="submit" [disabled]="guardando()">
+      @if (guardando()) {
+        <mat-spinner diameter="18" />
+      } @else {
+        <mat-icon>save</mat-icon>
+      }
+      Guardar
+    </button>
+  </mat-dialog-actions>
+</form>

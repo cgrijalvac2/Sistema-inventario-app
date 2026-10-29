@@ -1,0 +1,101 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>assignment</mat-icon></span>
+      <div>
+        <h1>{{ esNueva() ? 'Nueva orden de compra' : 'Editar orden ' + numero() }}</h1>
+        <p>Se recibirá en <strong>{{ almacen()?.Nombre ?? 'sin almacén' }}</strong>. La orden no mueve inventario hasta que se recibe.</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <a mat-stroked-button routerLink="/movimientos/ordenes-compra"><mat-icon>arrow_back</mat-icon> Volver</a>
+    </div>
+  </div>
+
+  <div class="contenido">
+    <div class="columna-principal">
+      <section class="tarjeta">
+        <h2>Datos de la orden</h2>
+        <div class="rejilla">
+          <mat-form-field>
+            <mat-label>Proveedor</mat-label>
+            <mat-select [value]="idProveedor()" (selectionChange)="idProveedor.set($event.value)">
+              @for (p of proveedores(); track p.ID_Proveedor) {
+                <mat-option [value]="p.ID_Proveedor">{{ p.Nombre }} <span class="texto-suave">· {{ p.NIT }}</span></mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field>
+            <mat-label>Fecha esperada de entrega</mat-label>
+            <input matInput [matDatepicker]="picker" [value]="fechaEsperada()" (dateChange)="fechaEsperada.set($event.value)" />
+            <mat-datepicker-toggle matIconSuffix [for]="picker" />
+            <mat-datepicker #picker />
+          </mat-form-field>
+
+          <mat-form-field class="completo">
+            <mat-label>Observaciones</mat-label>
+            <input matInput maxlength="255" [ngModel]="observaciones()" (ngModelChange)="observaciones.set($event)" />
+          </mat-form-field>
+        </div>
+      </section>
+
+      <section class="tarjeta">
+        <h2>Productos a pedir</h2>
+        <app-buscador-producto [productos]="productos()" (seleccionar)="agregar($event)" />
+
+        @if (lineas().length > 0) {
+          <div class="tabla-contenedor">
+            <table class="lineas">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="num">Cantidad</th>
+                  <th class="num">Costo unit.</th>
+                  <th class="num">Descuento</th>
+                  <th class="num">Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (linea of lineas(); track linea.ID_Producto) {
+                  <tr>
+                    <td><strong>{{ linea.NombreProducto }}</strong><div class="sub">{{ linea.CodigoProducto }}</div></td>
+                    <td class="num">
+                      <input class="campo numero" type="number" min="1" [class.invalido]="linea.Cantidad <= 0"
+                             [ngModel]="linea.Cantidad" (ngModelChange)="actualizar(linea, 'Cantidad', $event)" />
+                    </td>
+                    <td class="num">
+                      <input class="campo numero" type="number" min="0" step="0.01"
+                             [ngModel]="linea.CostoUnitario" (ngModelChange)="actualizar(linea, 'CostoUnitario', $event)" />
+                    </td>
+                    <td class="num">
+                      <input class="campo numero" type="number" min="0" step="0.01"
+                             [ngModel]="linea.Descuento" (ngModelChange)="actualizar(linea, 'Descuento', $event)" />
+                    </td>
+                    <td class="num monto"><strong>{{ linea.Cantidad * linea.CostoUnitario - linea.Descuento | moneda }}</strong></td>
+                    <td class="num"><button mat-icon-button (click)="quitar(linea)" matTooltip="Quitar"><mat-icon>delete_outline</mat-icon></button></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <div class="sin-datos"><mat-icon>playlist_add</mat-icon><p>Agregue los productos que va a pedir</p></div>
+        }
+      </section>
+    </div>
+
+    <aside class="tarjeta resumen-lateral">
+      <h2>Resumen</h2>
+      <div class="fila"><span>Productos</span><strong>{{ lineas().length }}</strong></div>
+      <div class="fila"><span>Subtotal</span><span class="monto">{{ subtotal() | moneda }}</span></div>
+      <div class="fila"><span>IVA ({{ iva() }}%)</span><span class="monto">{{ impuesto() | moneda }}</span></div>
+      <div class="fila total"><span>Total</span><span class="monto">{{ total() | moneda }}</span></div>
+      <button mat-flat-button class="guardar" [disabled]="!puedeGuardar()" (click)="guardar()">
+        @if (guardando()) { <mat-spinner diameter="20" /> } @else { <mat-icon>save</mat-icon> }
+        {{ esNueva() ? 'Crear orden' : 'Guardar cambios' }}
+      </button>
+    </aside>
+  </div>
+</div>

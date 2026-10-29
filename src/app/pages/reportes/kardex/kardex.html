@@ -1,0 +1,90 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Kardex</h1>
+      <p>Todas las entradas y salidas de un producto con su saldo, en orden cronológico.</p>
+    </div>
+    @if (movimientos().length > 0) {
+      <div class="acciones">
+        <button mat-stroked-button (click)="exportar()"><mat-icon>download</mat-icon> Exportar a Excel</button>
+      </div>
+    }
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <div class="buscador">
+        <app-buscador-producto [productos]="productos()" etiqueta="Buscar producto" (seleccionar)="elegir($event)" />
+      </div>
+
+      <mat-form-field>
+        <mat-label>Almacén</mat-label>
+        <mat-select [value]="idAlmacen()" (selectionChange)="idAlmacen.set($event.value); cargar()">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (a of almacenes(); track a.ID_Almacen) { <mat-option [value]="a.ID_Almacen">{{ a.Nombre }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="fechas">
+        <mat-label>Fechas</mat-label>
+        <mat-date-range-input [rangePicker]="rango">
+          <input matStartDate placeholder="Desde" [value]="desde()" (dateChange)="desde.set($event.value)" />
+          <input matEndDate placeholder="Hasta" [value]="hasta()" (dateChange)="hasta.set($event.value); cargar()" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="rango" />
+        <mat-date-range-picker #rango />
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if (producto(); as p) {
+    <div class="resumen">
+      <div class="tarjeta producto">
+        <small>Producto</small>
+        <strong>{{ p.NombreProducto }}</strong>
+        <span class="texto-suave">{{ p.CodigoProducto }}</span>
+      </div>
+      <div class="tarjeta cifra verde"><small>Entradas</small><strong>+{{ entradas() | numero }}</strong></div>
+      <div class="tarjeta cifra rojo"><small>Salidas</small><strong>−{{ salidas() | numero }}</strong></div>
+      <div class="tarjeta cifra"><small>Saldo {{ idAlmacen() ? 'del almacén' : 'total' }}</small><strong>{{ saldoFinal() | numero }}</strong></div>
+    </div>
+
+    <div class="tarjeta">
+      @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+      <div class="tabla-contenedor">
+        <table class="kardex">
+          <thead>
+            <tr>
+              <th>Fecha</th><th>Documento</th><th>Concepto</th><th>Almacén</th>
+              <th class="num">Entrada</th><th class="num">Salida</th><th class="num">Costo</th>
+              <th class="num">Saldo almacén</th><th class="num">Saldo total</th><th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of movimientos(); track m.ID_Movimiento) {
+              <tr>
+                <td>{{ m.FechaRegistro | fecha: true }}</td>
+                <td><strong>{{ m.Documento }}</strong></td>
+                <td><span class="chip" [class.exito]="m.TipoMovimiento === 'ENTRADA'" [class.peligro]="m.TipoMovimiento === 'SALIDA'">{{ m.Concepto }}</span></td>
+                <td>{{ m.Almacen }}</td>
+                <td class="num entrada">{{ m.Entrada ? '+' + m.Entrada : '' }}</td>
+                <td class="num salida">{{ m.Salida ? '−' + m.Salida : '' }}</td>
+                <td class="num monto">{{ m.CostoUnitario | moneda }}</td>
+                <td class="num"><strong>{{ m.SaldoActual_Almacen | numero }}</strong></td>
+                <td class="num">{{ m.SaldoActual_Producto | numero }}</td>
+                <td class="texto-suave">{{ m.Usuario }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="10"><div class="sin-datos"><mat-icon>timeline</mat-icon><p>El producto no tiene movimientos con esos filtros</p></div></td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  } @else {
+    <div class="tarjeta sin-datos">
+      <mat-icon>search</mat-icon>
+      <p>Busque un producto para ver su kardex</p>
+    </div>
+  }
+</div>

@@ -1,0 +1,73 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Transferencias</h1>
+      <p>Traslados entre almacenes. Al enviar sale del origen; al recibir entra al destino; si se rechaza regresa.</p>
+    </div>
+    <div class="acciones">
+      <a mat-flat-button routerLink="/movimientos/transferencias/nueva"><mat-icon>add</mat-icon> Nueva transferencia</a>
+    </div>
+  </div>
+
+  <mat-button-toggle-group class="vistas" [value]="vista()" (change)="vista.set($event.value)" hideSingleSelectionIndicator>
+    <mat-button-toggle value="POR_RECIBIR">
+      Por recibir @if (porRecibir() > 0) { <span class="contador">{{ porRecibir() }}</span> }
+    </mat-button-toggle>
+    <mat-button-toggle value="ENVIADAS">Enviadas por mi almacén</mat-button-toggle>
+    <mat-button-toggle value="TODAS">Todas</mat-button-toggle>
+  </mat-button-toggle-group>
+
+  @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+  <mat-accordion class="lista" multi>
+    @for (t of lista(); track t.ID_Transferencia) {
+      <mat-expansion-panel (opened)="abrir(t)">
+        <mat-expansion-panel-header>
+          <div class="cabecera">
+            <span class="numero">{{ t.NumeroTransferencia }}</span>
+            <span class="ruta">
+              <span>{{ t.AlmacenOrigen }}</span>
+              <mat-icon>arrow_forward</mat-icon>
+              <span>{{ t.AlmacenDestino }}</span>
+            </span>
+            <span class="texto-suave fecha">{{ t.FechaEnvio | fecha: true }}</span>
+            <span class="chip {{ estados[t.Estado] }}">{{ t.Estado }}</span>
+          </div>
+        </mat-expansion-panel-header>
+
+        <div class="detalle">
+          <div class="datos">
+            <div><small>Envió</small><span>{{ t.UsuarioEnvia }}</span></div>
+            <div><small>{{ t.Estado === 'RECHAZADA' ? 'Rechazó' : 'Recibió' }}</small><span>{{ t.UsuarioRecibe ?? '—' }}</span></div>
+            <div><small>Fecha de recepción</small><span>{{ t.FechaRecepcion | fecha: true }}</span></div>
+          </div>
+          @if (t.Observaciones) { <p class="texto-suave">{{ t.Observaciones }}</p> }
+          @if (t.MotivoRechazo) { <p class="rechazo"><mat-icon>report</mat-icon> {{ t.MotivoRechazo }}</p> }
+
+          @if (detalles()[t.ID_Transferencia]; as d) {
+            @for (l of d.Detalles; track l.ID_DetalleTransferencia) {
+              <div class="linea">
+                <span><strong>{{ l.NombreProducto }}</strong> <span class="texto-suave">· {{ l.CodigoProducto }}</span></span>
+                <strong>{{ l.Cantidad | numero }} u.</strong>
+              </div>
+            }
+          } @else {
+            <mat-progress-bar mode="indeterminate" />
+          }
+
+          @if (puedeResolver(t)) {
+            <div class="botones">
+              <button mat-stroked-button class="rechazar" (click)="rechazar(t)"><mat-icon>close</mat-icon> Rechazar</button>
+              <button mat-flat-button (click)="recibir(t)"><mat-icon>move_to_inbox</mat-icon> Recibir</button>
+            </div>
+          }
+        </div>
+      </mat-expansion-panel>
+    } @empty {
+      <div class="tarjeta sin-datos">
+        <mat-icon>local_shipping</mat-icon>
+        <p>{{ vista() === 'POR_RECIBIR' ? 'No hay transferencias pendientes de recibir en este almacén' : 'No hay transferencias' }}</p>
+      </div>
+    }
+  </mat-accordion>
+</div>

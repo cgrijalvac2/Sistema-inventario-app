@@ -1,0 +1,132 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div>
+      <h1>Órdenes de compra</h1>
+      <p>Pedidos a proveedores. La mercadería entra al inventario cuando se recibe con una compra.</p>
+    </div>
+    <div class="acciones">
+      <a mat-flat-button routerLink="/movimientos/ordenes-compra/nueva"><mat-icon>add</mat-icon> Nueva orden</a>
+    </div>
+  </div>
+
+  <div class="contenido" [class.con-detalle]="detalle()">
+    <div class="tarjeta">
+      <div class="filtros">
+        <mat-form-field>
+          <mat-label>Estado</mat-label>
+          <mat-select [value]="estado()" (selectionChange)="estado.set($event.value); cargar()">
+            <mat-option [value]="null">Todos</mat-option>
+            <mat-option value="PENDIENTE">Pendiente</mat-option>
+            <mat-option value="PARCIAL">Parcial</mat-option>
+            <mat-option value="COMPLETADA">Completada</mat-option>
+            <mat-option value="CANCELADA">Cancelada</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-slide-toggle [checked]="soloAlmacen()" (change)="soloAlmacen.set($event.checked); cargar()">Solo mi almacén</mat-slide-toggle>
+      </div>
+
+      @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+      <div class="tabla-contenedor">
+        <table mat-table [dataSource]="datos" matSort>
+          <ng-container matColumnDef="NumeroOrden">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Orden</th>
+            <td mat-cell *matCellDef="let o"><strong>{{ o.NumeroOrden }}</strong></td>
+          </ng-container>
+          <ng-container matColumnDef="FechaOrden">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+            <td mat-cell *matCellDef="let o">{{ o.FechaOrden | fecha }}</td>
+          </ng-container>
+          <ng-container matColumnDef="Proveedor">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Proveedor</th>
+            <td mat-cell *matCellDef="let o">{{ o.Proveedor }}<div class="texto-suave">{{ o.Almacen }}</div></td>
+          </ng-container>
+          <ng-container matColumnDef="FechaEsperada">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Esperada</th>
+            <td mat-cell *matCellDef="let o">{{ o.FechaEsperada | fecha }}</td>
+          </ng-container>
+          <ng-container matColumnDef="Total">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Total</th>
+            <td mat-cell *matCellDef="let o" class="derecha monto">{{ o.Total | moneda }}</td>
+          </ng-container>
+          <ng-container matColumnDef="Estado">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+            <td mat-cell *matCellDef="let o"><span class="chip {{ estados[o.Estado] }}">{{ o.Estado }}</span></td>
+          </ng-container>
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let o" class="derecha">
+              <button mat-icon-button [matMenuTriggerFor]="menu" (click)="$event.stopPropagation()"><mat-icon>more_vert</mat-icon></button>
+              <mat-menu #menu="matMenu">
+                <button mat-menu-item (click)="verDetalle(o)"><mat-icon>visibility</mat-icon> Ver detalle</button>
+                @if (abierta(o)) {
+                  <button mat-menu-item (click)="recibir(o)"><mat-icon>move_to_inbox</mat-icon> Recibir mercadería</button>
+                }
+                @if (o.Estado === 'PENDIENTE') {
+                  <a mat-menu-item [routerLink]="['/movimientos/ordenes-compra', o.ID_OrdenCompra]"><mat-icon>edit</mat-icon> Editar</a>
+                }
+                @if (abierta(o)) {
+                  <button mat-menu-item class="peligro" (click)="cancelar(o)"><mat-icon>block</mat-icon> Cancelar orden</button>
+                }
+              </mat-menu>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+          <tr mat-row *matRowDef="let o; columns: columnas" (click)="verDetalle(o)"
+              [class.seleccionada]="detalle()?.ID_OrdenCompra === o.ID_OrdenCompra"></tr>
+          <tr class="mat-row" *matNoDataRow>
+            <td [attr.colspan]="columnas.length">
+              <div class="sin-datos"><mat-icon>assignment</mat-icon><p>No hay órdenes de compra</p></div>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <mat-paginator [pageSizeOptions]="[10, 25]" [pageSize]="10" />
+    </div>
+
+    @if (detalle(); as d) {
+      <aside class="tarjeta panel">
+        <div class="panel-encabezado">
+          <div>
+            <h2>{{ d.NumeroOrden }}</h2>
+            <span class="chip {{ estados[d.Estado] }}">{{ d.Estado }}</span>
+          </div>
+          <button mat-icon-button (click)="detalle.set(null)"><mat-icon>close</mat-icon></button>
+        </div>
+
+        <p class="texto-suave">{{ d.Proveedor }} · {{ d.Almacen }} · creada por {{ d.Usuario }}</p>
+        @if (d.Observaciones) { <p class="texto-suave">{{ d.Observaciones }}</p> }
+
+        <div class="avance">
+          <div class="barra"><span [style.width.%]="avance(d)"></span></div>
+          <small>{{ avance(d) }}% recibido</small>
+        </div>
+
+        @for (l of d.Detalles; track l.ID_DetalleOC) {
+          <div class="linea">
+            <div>
+              <strong>{{ l.NombreProducto }}</strong>
+              <div class="texto-suave">{{ l.CantidadRecibida }} de {{ l.CantidadPedida }} recibidas · {{ l.CostoUnitario | moneda }} c/u</div>
+            </div>
+            @if (l.CantidadPendiente > 0) {
+              <span class="chip alerta">{{ l.CantidadPendiente }} pend.</span>
+            } @else {
+              <span class="chip exito">Completo</span>
+            }
+          </div>
+        }
+
+        <div class="totales">
+          <div><span>Subtotal</span><span>{{ d.Subtotal | moneda }}</span></div>
+          <div><span>IVA</span><span>{{ d.Impuesto | moneda }}</span></div>
+          <div class="total"><span>Total</span><span>{{ d.Total | moneda }}</span></div>
+        </div>
+
+        @if (abierta(d)) {
+          <button mat-flat-button class="ancho-completo" (click)="recibir(d)"><mat-icon>move_to_inbox</mat-icon> Recibir mercadería</button>
+        }
+      </aside>
+    }
+  </div>
+</div>

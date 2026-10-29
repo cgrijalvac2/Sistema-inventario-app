@@ -1,0 +1,69 @@
+.tarjeta {
+  margin-bottom: 16px;
+}
+
+.buscador {
+  flex: 1;
+  min-width: 280px;
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tarjeta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 20px;
+  }
+
+  small {
+    color: var(--app-texto-suave);
+    font-size: 12px;
+  }
+
+  strong {
+    font-size: 22px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .producto strong {
+    font-size: 17px;
+  }
+
+  .verde strong { color: var(--app-exito); }
+  .rojo strong { color: var(--app-peligro); }
+}
+
+table.kardex {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th {
+    background: #f8f9fc;
+    color: var(--app-texto-suave);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 10px 12px;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 12px;
+    border-top: 1px solid var(--app-borde);
+    white-space: nowrap;
+  }
+
+  .num { text-align: right; }
+  .entrada { color: var(--app-exito); font-weight: 600; }
+  .salida { color: var(--app-peligro); font-weight: 600; }
+}
