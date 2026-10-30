@@ -197,6 +197,7 @@ export interface Existencia {
   StockMinimo: number;
   StockMaximo: number;
   Costo: number;
+  Precio: number;          // precio de venta
   ValorInventario: number;
   Alerta: 'BAJO' | 'NORMAL' | 'EXCESO';
 }

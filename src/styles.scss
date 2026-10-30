@@ -7,6 +7,9 @@ html {
     color: (
       primary: mat.$azure-palette,
       tertiary: mat.$violet-palette,
+      // Colores fijos de modo claro. Sin esto Material usa la función CSS light-dark(),
+      // que algunos navegadores no reconocen y los modales/menús se ven transparentes
+      theme-type: light,
     ),
     typography: (
       plain-family: 'Inter, Roboto, "Segoe UI", sans-serif',
@@ -231,7 +234,31 @@ body {
   --mat-snack-bar-button-color: #fecaca;
 }
 
-// Diálogos
+// Diálogos (modales): fondo blanco, sombra y el resto de la pantalla oscurecida detrás
 .mat-mdc-dialog-container {
   --mat-dialog-container-shape: 18px;
+  --mat-dialog-container-color: #ffffff;
+}
+
+.mat-mdc-dialog-surface {
+  background-color: #ffffff !important;
+  box-shadow: 0 24px 48px rgba(16, 24, 40, .25), 0 8px 16px rgba(16, 24, 40, .12) !important;
+}
+
+// Modal grande de documentos (nueva venta / compra): fondo gris para que resalten las tarjetas blancas
+.modal-documento .mat-mdc-dialog-surface {
+  background-color: var(--app-fondo) !important;
+}
+
+.cdk-overlay-dark-backdrop {
+  background: rgba(15, 23, 42, .55) !important;
+}
+
+// Listas desplegables, autocompletar, menús y calendario: también con fondo blanco
+.mat-mdc-select-panel,
+.mat-mdc-autocomplete-panel,
+.mat-mdc-menu-panel,
+.mat-datepicker-content {
+  background-color: #ffffff !important;
+  box-shadow: 0 12px 24px rgba(16, 24, 40, .16) !important;
 }

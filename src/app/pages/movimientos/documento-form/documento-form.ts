@@ -10,6 +10,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
@@ -19,7 +20,13 @@ import {
 } from '../../../core/models/modelos';
 import { BuscadorProducto, ProductoBuscable } from '../../../shared/buscador-producto/buscador-producto';
 
-type Modo = 'VENTA' | 'COMPRA' | 'NOTA_CLIENTE' | 'NOTA_PROVEEDOR' | 'AJUSTE';
+export type Modo = 'VENTA' | 'COMPRA' | 'NOTA_CLIENTE' | 'NOTA_PROVEEDOR' | 'AJUSTE';
+
+// Datos cuando el formulario se abre como modal (desde los módulos Ventas y Compras)
+export interface DatosDocumentoModal {
+  modo: Modo;
+  idOrden?: number;     // compra que recibe una orden de compra
+}
 
 interface Linea {
   ID_Producto: number;
@@ -36,7 +43,7 @@ interface Linea {
 // Textos y comportamiento de cada pantalla
 const MODOS: Record<Modo, { titulo: string; subtitulo: string; icono: string; tercero: 'CLIENTE' | 'PROVEEDOR' | null }> = {
   VENTA: { titulo: 'Nueva venta', subtitulo: 'La mercadería sale del almacén', icono: 'point_of_sale', tercero: 'CLIENTE' },
-  COMPRA: { titulo: 'Nueva compra', subtitulo: 'La mercadería entra al almacén y se recalcula el costo promedio', icono: 'shopping_cart', tercero: 'PROVEEDOR' },
+  COMPRA: { titulo: 'Nueva compra', subtitulo: 'La mercadería entra al almacén y se actualiza el costo de compra', icono: 'shopping_cart', tercero: 'PROVEEDOR' },
   NOTA_CLIENTE: { titulo: 'Nota a cliente', subtitulo: 'Corrige una venta: devolución (crédito) o cargo adicional (débito)', icono: 'receipt_long', tercero: 'CLIENTE' },
   NOTA_PROVEEDOR: { titulo: 'Nota de proveedor', subtitulo: 'Corrige una compra: devolución al proveedor (crédito) o cargo adicional (débito)', icono: 'request_quote', tercero: 'PROVEEDOR' },
   AJUSTE: { titulo: 'Ajuste de inventario', subtitulo: 'Inventario inicial, sobrantes, mermas, daños o diferencias de conteo', icono: 'tune', tercero: null },
@@ -52,13 +59,18 @@ const MODOS: Record<Modo, { titulo: string; subtitulo: string; icono: string; te
   styleUrl: './documento-form.scss',
 })
 export class DocumentoForm implements OnInit {
-  // Viene del "data" de la ruta
-  modo = input.required<Modo>();
+  // Como página el modo viene del "data" de la ruta; como modal viene en MAT_DIALOG_DATA
+  modoRuta = input<Modo | undefined>(undefined, { alias: 'modo' });
+  private datosModal = inject<DatosDocumentoModal | null>(MAT_DIALOG_DATA, { optional: true });
+  private dialogRef = inject<MatDialogRef<DocumentoForm, boolean> | null>(MatDialogRef, { optional: true });
+  protected enModal = !!this.dialogRef;
+  protected modo = computed<Modo>(() => this.datosModal?.modo ?? this.modoRuta() ?? 'VENTA');
 
   private api = inject(ApiService);
   private auth = inject(AuthService);
   private notificacion = inject(NotificacionService);
   private route = inject(ActivatedRoute);
+  private huboRegistros = false;
 
   protected info = computed(() => MODOS[this.modo()]);
   protected almacen = this.auth.almacenActual;
@@ -173,7 +185,7 @@ export class DocumentoForm implements OnInit {
 
   // Desde "Órdenes de compra > Recibir" se llega con ?orden=5
   private leerOrdenDeLaUrl(): void {
-    const idOrden = Number(this.route.snapshot.queryParamMap.get('orden'));
+    const idOrden = this.datosModal?.idOrden ?? Number(this.route.snapshot.queryParamMap.get('orden'));
     if (this.modo() !== 'COMPRA' || !idOrden) {
       return;
     }
@@ -323,6 +335,7 @@ export class DocumentoForm implements OnInit {
       next: documento => {
         this.guardando.set(false);
         this.registrado.set(documento);
+        this.huboRegistros = true;
         this.notificacion.exito(`Documento ${documento.NumeroDocumento} registrado`);
       },
       error: () => this.guardando.set(false),
@@ -330,6 +343,11 @@ export class DocumentoForm implements OnInit {
   }
 
   // Deja la pantalla lista para otro documento (recarga existencias porque cambiaron)
+  // En modal: avisa al listado si se registró algo para que se actualice
+  protected cerrar(): void {
+    this.dialogRef?.close(this.huboRegistros);
+  }
+
   protected nuevo(): void {
     this.registrado.set(null);
     this.lineas.set([]);

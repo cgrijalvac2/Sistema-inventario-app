@@ -1,0 +1,91 @@
+<h2 mat-dialog-title>Agregar productos a {{ datos.almacen.Nombre }}</h2>
+
+<mat-dialog-content>
+  @if (datos.productos.length === 0) {
+    <div class="vacio">
+      <mat-icon>task_alt</mat-icon>
+      <p>Todos los productos activos ya están asignados a este almacén.</p>
+    </div>
+  } @else {
+    <h3>1. Elija los productos</h3>
+    <mat-form-field class="ancho-completo">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Buscar por código, nombre o categoría" [ngModel]="buscar()" (ngModelChange)="buscar.set($event)" />
+    </mat-form-field>
+
+    <mat-selection-list class="lista">
+      @for (p of filtrados(); track p.ID_Producto) {
+        <mat-list-option [value]="p.ID_Producto" togglePosition="before"
+                         [selected]="elegido(p.ID_Producto)"
+                         (selectedChange)="marcar(p, $event)">
+          <span matListItemTitle>{{ p.NombreProducto }}</span>
+          <span matListItemLine class="codigo">{{ p.CodigoProducto }} · {{ p.NombreCategoria }} · costo {{ p.Costo | moneda }}</span>
+        </mat-list-option>
+      } @empty {
+        <div class="vacio">No hay productos con ese texto</div>
+      }
+    </mat-selection-list>
+
+    <h3>2. Indique cuánto hay de cada uno</h3>
+    @if (lineas().length > 0) {
+      <div class="tabla-contenedor">
+        <table class="lineas">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th class="num">Existencia actual</th>
+              <th class="num">Costo unit.</th>
+              <th class="num">Mínimo</th>
+              <th class="num">Máximo</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (l of lineas(); track l.producto.ID_Producto) {
+              <tr>
+                <td><strong>{{ l.producto.NombreProducto }}</strong><div class="codigo">{{ l.producto.CodigoProducto }}</div></td>
+                <td class="num">
+                  <input class="campo" type="number" min="0" [class.invalido]="l.Cantidad < 0"
+                         [ngModel]="l.Cantidad" (ngModelChange)="actualizar(l, 'Cantidad', $event)" />
+                </td>
+                <td class="num">
+                  <input class="campo" type="number" min="0" step="0.01" [disabled]="!l.Cantidad"
+                         [ngModel]="l.CostoUnitario" (ngModelChange)="actualizar(l, 'CostoUnitario', $event)" />
+                </td>
+                <td class="num">
+                  <input class="campo" type="number" min="0" [ngModel]="l.StockMinimo" (ngModelChange)="actualizar(l, 'StockMinimo', $event)"
+                         [class.invalido]="l.StockMaximo > 0 && l.StockMinimo > l.StockMaximo" />
+                </td>
+                <td class="num">
+                  <input class="campo" type="number" min="0" [ngModel]="l.StockMaximo" (ngModelChange)="actualizar(l, 'StockMaximo', $event)"
+                         [class.invalido]="l.StockMaximo > 0 && l.StockMinimo > l.StockMaximo" />
+                </td>
+                <td class="num">
+                  <button mat-icon-button (click)="marcar(l.producto, false)" matTooltip="Quitar de la lista"><mat-icon>close</mat-icon></button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <p class="nota">
+        <mat-icon>info</mat-icon>
+        <span>
+          La existencia se registra como un <strong>Ajuste de entrada</strong> con motivo "Inventario inicial"
+          ({{ unidades() }} unidades · {{ valor() | moneda }}), así queda en el kardex.
+          Mínimo y máximo en 0 = sin alerta / sin límite.
+        </span>
+      </p>
+    } @else {
+      <div class="vacio">Marque arriba los productos que maneja este almacén</div>
+    }
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close [disabled]="guardando()">Cancelar</button>
+  <button mat-flat-button [disabled]="guardando() || !valido()" (click)="guardar()">
+    @if (guardando()) { <mat-spinner diameter="18" /> } @else { <mat-icon>add</mat-icon> }
+    Agregar {{ lineas().length || '' }}
+  </button>
+</mat-dialog-actions>

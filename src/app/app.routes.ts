@@ -1,10 +1,12 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes } from '@angular/router';
 import { authGuard, loginGuard, permisoGuard } from './core/guards/auth.guard';
 import { CONFIGURACIONES } from './pages/mantenimientos/configuraciones';
 
 // Las pantallas se cargan solo cuando se visitan (loadComponent) para que la app inicie rápido
 const mantenimiento = () => import('./shared/mantenimiento/mantenimiento').then(m => m.Mantenimiento);
 const documentoForm = () => import('./pages/movimientos/documento-form/documento-form').then(m => m.DocumentoForm);
+const ventasCompras = () => import('./pages/movimientos/ventas-compras/ventas-compras').then(m => m.VentasCompras);
 
 export const routes: Routes = [
   {
@@ -22,8 +24,12 @@ export const routes: Routes = [
       { path: 'inicio', title: 'Inicio', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.Dashboard) },
 
       // ---------- Movimientos ----------
-      { path: 'movimientos/venta', title: 'Nueva venta', loadComponent: documentoForm, data: { modo: 'VENTA', permisos: ['VENTAS'] } },
-      { path: 'movimientos/compra', title: 'Nueva compra', loadComponent: documentoForm, data: { modo: 'COMPRA', permisos: ['COMPRAS'] } },
+      // Módulos de ventas y compras: listado + registrar en un modal
+      { path: 'movimientos/ventas', title: 'Ventas', loadComponent: ventasCompras, data: { tipo: 'VENTA', permisos: ['VENTAS', 'REPORTES'] } },
+      { path: 'movimientos/compras', title: 'Compras', loadComponent: ventasCompras, data: { tipo: 'COMPRA', permisos: ['COMPRAS', 'REPORTES'] } },
+      // Rutas anteriores: llevan al módulo y abren el modal (?nueva=1, o ?orden=5 al recibir una orden de compra)
+      { path: 'movimientos/venta', redirectTo: ({ queryParams }) => inject(Router).createUrlTree(['/movimientos/ventas'], { queryParams: { nueva: 1, ...queryParams } }) },
+      { path: 'movimientos/compra', redirectTo: ({ queryParams }) => inject(Router).createUrlTree(['/movimientos/compras'], { queryParams: { nueva: 1, ...queryParams } }) },
       { path: 'movimientos/notas-clientes', title: 'Notas a clientes', loadComponent: documentoForm, data: { modo: 'NOTA_CLIENTE', permisos: ['VENTAS'] } },
       { path: 'movimientos/notas-proveedores', title: 'Notas de proveedores', loadComponent: documentoForm, data: { modo: 'NOTA_PROVEEDOR', permisos: ['COMPRAS'] } },
       { path: 'movimientos/ajuste', title: 'Ajuste de inventario', loadComponent: documentoForm, data: { modo: 'AJUSTE', permisos: ['AJUSTES'] } },
@@ -68,6 +74,10 @@ export const routes: Routes = [
 
       // ---------- Mantenimientos (todos usan el mismo componente con distinta configuración) ----------
       { path: 'catalogos/productos', title: 'Productos', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.productos, permisos: ['CATALOGOS'] } },
+      {
+        path: 'catalogos/productos-almacen', title: 'Productos por almacén', data: { permisos: ['CATALOGOS'] },
+        loadComponent: () => import('./pages/catalogos/productos-almacen/productos-almacen').then(m => m.ProductosAlmacen),
+      },
       { path: 'catalogos/categorias', title: 'Categorías', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.categorias, permisos: ['CATALOGOS'] } },
       { path: 'catalogos/unidades', title: 'Unidades de medida', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.unidades, permisos: ['CATALOGOS'] } },
       { path: 'catalogos/clientes', title: 'Clientes', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.clientes, permisos: ['CATALOGOS'] } },
@@ -76,6 +86,10 @@ export const routes: Routes = [
       { path: 'catalogos/motivos', title: 'Motivos de ajuste', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.motivos, permisos: ['CATALOGOS'] } },
       { path: 'seguridad/usuarios', title: 'Usuarios', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.usuarios, permisos: ['SEGURIDAD'] } },
       { path: 'seguridad/roles', title: 'Roles', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.roles, permisos: ['SEGURIDAD'] } },
+      {
+        path: 'seguridad/rol-permisos', title: 'Roles y permisos', data: { permisos: ['SEGURIDAD'] },
+        loadComponent: () => import('./pages/seguridad/rol-permisos/rol-permisos').then(m => m.RolPermisos),
+      },
       { path: 'seguridad/permisos', title: 'Permisos', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.permisos, permisos: ['SEGURIDAD'] } },
       { path: 'configuracion/parametros', title: 'Parámetros del sistema', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.parametros, permisos: ['CONFIGURACION'] } },
       { path: 'configuracion/correlativos', title: 'Correlativos', loadComponent: mantenimiento, data: { config: CONFIGURACIONES.correlativos, permisos: ['CONFIGURACION'] } },

@@ -130,6 +130,19 @@ select.campo {
   min-width: 160px;
 }
 
+// Cuando el formulario se abre como modal
+.en-modal {
+  padding: 24px 28px;
+  max-width: none;
+  width: 100%;          // el contenedor del modal es flex: sin esto el formulario se encoge al centro
+  flex: 1 1 auto;
+  margin: 0;
+
+  .resumen-lateral {
+    top: 0;
+  }
+}
+
 // Panel derecho con totales
 .resumen-lateral {
   position: sticky;

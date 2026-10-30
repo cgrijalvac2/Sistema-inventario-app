@@ -45,8 +45,11 @@ src/app/
     ├── login/
     ├── dashboard/              Indicadores, ventas de 7 días, más vendidos y stock bajo
     ├── mantenimientos/configuraciones.ts   Columnas y campos de los 13 mantenimientos
+    ├── catalogos/productos-almacen/        Qué productos maneja cada almacén (tabla InventarioAlmacen)
+    ├── seguridad/rol-permisos/             Matriz de permisos por rol (tabla RolPermiso)
     ├── movimientos/
-    │   ├── documento-form/     Venta, compra, notas de crédito/débito y ajustes (un solo componente)
+    │   ├── ventas-compras/     Módulos Ventas y Compras: listado, totales del período y "Nueva" en un modal
+    │   ├── documento-form/     Formulario de venta, compra, notas y ajustes (página o modal, un solo componente)
     │   ├── documentos/         Historial de documentos, detalle y anulación
     │   ├── ordenes-compra/     Listado, detalle, cancelar y recibir
     │   ├── orden-compra-form/  Crear y editar órdenes
@@ -85,13 +88,13 @@ están protegidas con `permisoGuard`:
 
 | Permiso | Opciones |
 |---|---|
-| VENTAS | Nueva venta, notas a clientes |
-| COMPRAS | Nueva compra, órdenes de compra, notas de proveedores |
+| VENTAS | Ventas (listado y nueva venta), notas a clientes |
+| COMPRAS | Compras (listado y nueva compra), órdenes de compra, notas de proveedores |
 | AJUSTES | Ajustes de inventario |
 | TRANSFERENCIAS | Transferencias |
-| REPORTES | Existencias, kardex, entradas y salidas |
-| CATALOGOS | Productos, categorías, unidades, clientes, proveedores, almacenes, motivos |
-| SEGURIDAD | Usuarios, roles, permisos |
+| REPORTES | Existencias, kardex, entradas y salidas; también ve los listados de Ventas y Compras |
+| CATALOGOS | Productos, productos por almacén, categorías, unidades, clientes, proveedores, almacenes, motivos |
+| SEGURIDAD | Usuarios, roles, permisos, roles y permisos |
 | CONFIGURACION | Parámetros, correlativos, tipos de transacción |
 
 ## Almacén actual

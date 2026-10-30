@@ -5,7 +5,7 @@ import { ConfigMantenimiento } from '../../shared/mantenimiento/mantenimiento.mo
 
 const productos: ConfigMantenimiento = {
   titulo: 'Productos',
-  subtitulo: 'Catálogo de productos, precios y costo promedio',
+  subtitulo: 'Catálogo de productos con su costo de compra y precio de venta',
   icono: 'inventory_2',
   url: 'Productos',
   id: 'ID_Producto',
@@ -17,8 +17,8 @@ const productos: ConfigMantenimiento = {
     { campo: 'NombreProducto', titulo: 'Producto' },
     { campo: 'NombreCategoria', titulo: 'Categoría' },
     { campo: 'UnidadMedida', titulo: 'Unidad' },
-    { campo: 'Costo', titulo: 'Costo prom.', tipo: 'moneda' },
-    { campo: 'Precio', titulo: 'Precio', tipo: 'moneda' },
+    { campo: 'Costo', titulo: 'Costo compra', tipo: 'moneda' },
+    { campo: 'Precio', titulo: 'Precio venta', tipo: 'moneda' },
     { campo: 'StockTotal', titulo: 'Existencia', tipo: 'numero' },
     { campo: 'Estado', titulo: 'Estado', tipo: 'estado' },
   ],
@@ -29,9 +29,10 @@ const productos: ConfigMantenimiento = {
       opciones: { url: 'Categorias?soloActivos=true', valor: 'ID_Categoria', texto: 'NombreCategoria' } },
     { nombre: 'ID_UnidadMedida', etiqueta: 'Unidad de medida', tipo: 'select', requerido: true,
       opciones: { url: 'UnidadesMedida?soloActivos=true', valor: 'ID_UnidadMedida', texto: 'Nombre' } },
-    { nombre: 'Costo', etiqueta: 'Costo inicial', tipo: 'decimal', soloCrear: true, valorDefecto: 0,
-      ayuda: 'Después lo recalculan las compras (costo promedio)' },
-    { nombre: 'Precio', etiqueta: 'Precio de venta', tipo: 'decimal', requerido: true, valorDefecto: 0 },
+    { nombre: 'Costo', etiqueta: 'Costo de compra', tipo: 'decimal', requerido: true, valorDefecto: 0,
+      ayuda: 'Lo que se paga al proveedor. Cada compra lo actualiza' },
+    { nombre: 'Precio', etiqueta: 'Precio de venta', tipo: 'decimal', requerido: true, valorDefecto: 0,
+      ayuda: 'Precio sugerido al vender' },
     { nombre: 'Descripcion', etiqueta: 'Descripción', tipo: 'textarea', maxLength: 255 },
   ],
 };
@@ -300,7 +301,7 @@ const correlativos: ConfigMantenimiento = {
     { nombre: 'Clave', etiqueta: 'Documento', tipo: 'texto', deshabilitadoAlEditar: true, ancho: 'completo' },
     { nombre: 'Prefijo', etiqueta: 'Prefijo', tipo: 'texto', requerido: true, maxLength: 10, mayusculas: true },
     { nombre: 'UltimoNumero', etiqueta: 'Último número usado', tipo: 'numero', requerido: true },
-    { nombre: 'Estado', etiqueta: 'Activo', tipo: 'checkbox' },
+    { nombre: 'Estado', etiqueta: 'Estado', tipo: 'estado' },
   ],
 };
 
@@ -328,7 +329,7 @@ const tiposTransaccion: ConfigMantenimiento = {
     { nombre: 'Codigo', etiqueta: 'Código', tipo: 'texto', deshabilitadoAlEditar: true },
     { nombre: 'Nombre', etiqueta: 'Nombre', tipo: 'texto', requerido: true, maxLength: 50 },
     { nombre: 'Descripcion', etiqueta: 'Descripción', tipo: 'textarea', maxLength: 255 },
-    { nombre: 'Estado', etiqueta: 'Activo', tipo: 'checkbox' },
+    { nombre: 'Estado', etiqueta: 'Estado', tipo: 'estado' },
   ],
 };
 

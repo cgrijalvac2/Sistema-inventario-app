@@ -1,0 +1,73 @@
+.titulo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  .icono {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--app-primario-suave);
+    color: var(--app-primario);
+  }
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px 20px;
+  background: #fff;
+  border: 1px solid var(--app-borde);
+  border-radius: var(--app-radio);
+  box-shadow: var(--app-sombra);
+
+  small {
+    color: var(--app-texto-suave);
+    font-size: 13px;
+  }
+
+  strong {
+    font-size: 22px;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    color: var(--app-texto-suave);
+    font-size: 12px;
+  }
+
+  &.alerta strong {
+    color: var(--app-peligro);
+  }
+}
+
+tr.mat-mdc-row {
+  cursor: pointer;
+}
+
+tr.anulada td {
+  opacity: .55;
+}
+
+.sin-datos button {
+  margin-top: 4px;
+}
+
+mat-progress-bar {
+  margin-bottom: 8px;
+}

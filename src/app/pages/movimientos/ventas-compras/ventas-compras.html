@@ -1,0 +1,146 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>{{ textos().icono }}</mat-icon></span>
+      <div>
+        <h1>{{ textos().titulo }}</h1>
+        <p>{{ textos().subtitulo }}</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <button mat-stroked-button (click)="exportar()"><mat-icon>download</mat-icon> Exportar</button>
+      @if (puedeRegistrar()) {
+        <button mat-flat-button (click)="nuevo()"><mat-icon>add</mat-icon> {{ textos().nuevo }}</button>
+      }
+    </div>
+  </div>
+
+  <!-- Totales del período filtrado -->
+  <div class="indicadores">
+    <div class="indicador">
+      <small>Total del período</small>
+      <strong>{{ total() | moneda }}</strong>
+      <span>IVA incluido {{ impuesto() | moneda }}</span>
+    </div>
+    <div class="indicador">
+      <small>{{ textos().titulo }} registradas</small>
+      <strong>{{ registradas().length | numero }}</strong>
+      <span>en el período</span>
+    </div>
+    <div class="indicador">
+      <small>Promedio por documento</small>
+      <strong>{{ promedio() | moneda }}</strong>
+      <span>&nbsp;</span>
+    </div>
+    <div class="indicador" [class.alerta]="anuladas() > 0">
+      <small>Anuladas</small>
+      <strong>{{ anuladas() | numero }}</strong>
+      <span>no suman al total</span>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-form-field class="buscar">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Número, {{ textos().tercero.toLowerCase() }} o referencia"
+               [value]="buscar()" (input)="buscarTexto($any($event.target).value)" />
+      </mat-form-field>
+
+      <mat-form-field class="fechas">
+        <mat-label>Fechas</mat-label>
+        <mat-date-range-input [rangePicker]="rango">
+          <input matStartDate placeholder="Desde" [value]="desde()" (dateChange)="desde.set($event.value)" />
+          <input matEndDate placeholder="Hasta" [value]="hasta()" (dateChange)="filtrar(hasta, $event.value)" />
+        </mat-date-range-input>
+        <mat-datepicker-toggle matIconSuffix [for]="rango" />
+        <mat-date-range-picker #rango />
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>{{ textos().tercero }}</mat-label>
+        <mat-select [value]="idTercero()" (selectionChange)="filtrar(idTercero, $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          @for (t of terceros(); track idDe(t)) { <mat-option [value]="idDe(t)">{{ t.Nombre }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Estado</mat-label>
+        <mat-select [value]="estado()" (selectionChange)="filtrar(estado, $event.value)">
+          <mat-option [value]="null">Todos</mat-option>
+          <mat-option value="REGISTRADA">Registrada</mat-option>
+          <mat-option value="ANULADA">Anulada</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-slide-toggle [checked]="soloAlmacen()" (change)="filtrar(soloAlmacen, $event.checked)">Solo mi almacén</mat-slide-toggle>
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort matSortActive="Fecha" matSortDirection="desc">
+        <ng-container matColumnDef="NumeroDocumento">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Número</th>
+          <td mat-cell *matCellDef="let d"><strong>{{ d.NumeroDocumento }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="Fecha">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Fecha</th>
+          <td mat-cell *matCellDef="let d">{{ d.Fecha | fecha: true }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Tercero">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ textos().tercero }}</th>
+          <td mat-cell *matCellDef="let d">
+            {{ d.Cliente ?? d.Proveedor }}
+            <div class="texto-suave">{{ d.Almacen }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="Referencia">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Referencia</th>
+          <td mat-cell *matCellDef="let d">
+            {{ d.Referencia ?? '—' }}
+            @if (d.NumeroOrden) { <div class="texto-suave">orden {{ d.NumeroOrden }}</div> }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="Subtotal">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Subtotal</th>
+          <td mat-cell *matCellDef="let d" class="derecha monto">{{ d.Subtotal - d.Descuento | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Impuesto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">IVA</th>
+          <td mat-cell *matCellDef="let d" class="derecha monto">{{ d.Impuesto | moneda }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Total">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Total</th>
+          <td mat-cell *matCellDef="let d" class="derecha monto"><strong>{{ d.Total | moneda }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="Estado">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Estado</th>
+          <td mat-cell *matCellDef="let d"><span class="chip {{ estados[d.Estado] }}">{{ d.Estado }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let d" class="derecha">
+            <button mat-icon-button matTooltip="Ver detalle / anular" (click)="ver(d)"><mat-icon>visibility</mat-icon></button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let d; columns: columnas" (dblclick)="ver(d)" [class.anulada]="d.Estado === 'ANULADA'"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas.length">
+            <div class="sin-datos">
+              <mat-icon>{{ textos().icono }}</mat-icon>
+              <p>No hay {{ textos().titulo.toLowerCase() }} con esos filtros</p>
+              @if (puedeRegistrar()) {
+                <button mat-stroked-button (click)="nuevo()"><mat-icon>add</mat-icon> {{ textos().nuevo }}</button>
+              }
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" showFirstLastButtons />
+  </div>
+</div>

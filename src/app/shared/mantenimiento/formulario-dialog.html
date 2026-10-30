@@ -7,8 +7,19 @@
   <mat-dialog-content>
     <div class="rejilla">
       @for (campo of campos; track campo.nombre) {
-        <div [class.completo]="campo.ancho === 'completo' || campo.tipo === 'textarea' || campo.tipo === 'multiselect'">
+        <div [class.completo]="campo.ancho === 'completo' || campo.tipo === 'textarea' || campo.tipo === 'multiselect' || campo.tipo === 'estado'">
           @switch (campo.tipo) {
+            @case ('estado') {
+              <div class="estado">
+                <div>
+                  <strong>{{ form.get(campo.nombre)?.value ? 'Activo' : 'Inactivo' }}</strong>
+                  <small>{{ form.get(campo.nombre)?.value
+                    ? 'Aparece en las listas y se puede usar en el sistema'
+                    : 'No se borra, pero ya no aparece en las listas para usarlo' }}</small>
+                </div>
+                <mat-slide-toggle [formControlName]="campo.nombre" aria-label="Estado" />
+              </div>
+            }
             @case ('checkbox') {
               <div class="checkbox">
                 <mat-checkbox [formControlName]="campo.nombre">{{ campo.etiqueta }}</mat-checkbox>

@@ -1,4 +1,4 @@
-<div class="pagina">
+<div class="pagina" [class.en-modal]="enModal">
   <div class="encabezado">
     <div class="titulo">
       <span class="icono"><mat-icon>{{ info().icono }}</mat-icon></span>
@@ -8,7 +8,11 @@
       </div>
     </div>
     <div class="acciones">
-      <a mat-stroked-button routerLink="/movimientos/documentos"><mat-icon>folder_open</mat-icon> Ver documentos</a>
+      @if (enModal) {
+        <button mat-icon-button (click)="cerrar()" matTooltip="Cerrar"><mat-icon>close</mat-icon></button>
+      } @else {
+        <a mat-stroked-button routerLink="/movimientos/documentos"><mat-icon>folder_open</mat-icon> Ver documentos</a>
+      }
     </div>
   </div>
 
@@ -26,7 +30,11 @@
         }
       </div>
       <div class="botones">
-        <a mat-stroked-button routerLink="/movimientos/documentos">Ir a documentos</a>
+        @if (enModal) {
+          <button mat-stroked-button (click)="cerrar()">Cerrar</button>
+        } @else {
+          <a mat-stroked-button routerLink="/movimientos/documentos">Ir a documentos</a>
+        }
         <button mat-flat-button (click)="nuevo()"><mat-icon>add</mat-icon> Registrar otro</button>
       </div>
     </div>

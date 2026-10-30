@@ -1,0 +1,66 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>rule_settings</mat-icon></span>
+      <div>
+        <h1>Roles y permisos</h1>
+        <p>Marque a qué opciones del sistema tiene acceso cada rol</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <a mat-stroked-button routerLink="/seguridad/roles"><mat-icon>admin_panel_settings</mat-icon> Roles</a>
+      <a mat-stroked-button routerLink="/seguridad/permisos"><mat-icon>key</mat-icon> Permisos</a>
+      <button mat-icon-button (click)="cargar()" matTooltip="Actualizar"><mat-icon>refresh</mat-icon></button>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="nota">
+      <mat-icon>info</mat-icon>
+      Cada casilla se guarda al instante. Los usuarios ven los cambios en su menú la próxima vez que inicien sesión.
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table class="matriz">
+        <thead>
+          <tr>
+            <th class="permiso">Permiso</th>
+            @for (rol of roles(); track rol.ID_Rol) {
+              <th class="rol">
+                <div class="nombre-rol" [matTooltip]="rol.Descripcion ?? ''">{{ rol.NombreRol }}</div>
+                <div class="contador">{{ totalPorRol()[rol.ID_Rol] ?? 0 }} de {{ permisos().length }}</div>
+                <div class="todos">
+                  <button mat-icon-button (click)="todos(rol, true)" matTooltip="Dar todos"><mat-icon>done_all</mat-icon></button>
+                  <button mat-icon-button (click)="todos(rol, false)" matTooltip="Quitar todos"><mat-icon>remove_done</mat-icon></button>
+                </div>
+              </th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (permiso of permisos(); track permiso.ID_Permiso) {
+            <tr>
+              <td class="permiso">
+                <span class="chip primario">{{ permiso.Codigo }}</span>
+                <div class="nombre">{{ permiso.Nombre }}</div>
+              </td>
+              @for (rol of roles(); track rol.ID_Rol) {
+                <td class="rol">
+                  <mat-checkbox
+                    [checked]="tiene(rol.ID_Rol, permiso.ID_Permiso)"
+                    [disabled]="ocupado(rol.ID_Rol, permiso.ID_Permiso)"
+                    (change)="cambiar(rol, permiso, $event.checked)"
+                    [attr.aria-label]="rol.NombreRol + ' - ' + permiso.Codigo" />
+                </td>
+              }
+            </tr>
+          } @empty {
+            <tr><td [attr.colspan]="roles().length + 1"><div class="sin-datos"><mat-icon>key_off</mat-icon><p>No hay permisos activos</p></div></td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

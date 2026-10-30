@@ -2,7 +2,7 @@
 // Con esto un solo componente sirve para productos, clientes, usuarios, roles, etc.
 
 export type TipoCampo =
-  | 'texto' | 'numero' | 'decimal' | 'email' | 'password' | 'textarea' | 'select' | 'multiselect' | 'checkbox';
+  | 'texto' | 'numero' | 'decimal' | 'email' | 'password' | 'textarea' | 'select' | 'multiselect' | 'checkbox' | 'estado';
 
 export interface Opcion {
   valor: unknown;

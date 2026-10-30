@@ -22,8 +22,8 @@ export const MENU: SeccionMenu[] = [
   {
     titulo: 'Movimientos',
     opciones: [
-      { texto: 'Nueva venta', icono: 'point_of_sale', ruta: '/movimientos/venta', permisos: ['VENTAS'] },
-      { texto: 'Nueva compra', icono: 'shopping_cart', ruta: '/movimientos/compra', permisos: ['COMPRAS'] },
+      { texto: 'Ventas', icono: 'point_of_sale', ruta: '/movimientos/ventas', permisos: ['VENTAS', 'REPORTES'] },
+      { texto: 'Compras', icono: 'shopping_cart', ruta: '/movimientos/compras', permisos: ['COMPRAS', 'REPORTES'] },
       { texto: 'Órdenes de compra', icono: 'assignment', ruta: '/movimientos/ordenes-compra', permisos: ['COMPRAS'] },
       { texto: 'Notas a clientes', icono: 'receipt_long', ruta: '/movimientos/notas-clientes', permisos: ['VENTAS'] },
       { texto: 'Notas de proveedores', icono: 'request_quote', ruta: '/movimientos/notas-proveedores', permisos: ['COMPRAS'] },
@@ -44,6 +44,7 @@ export const MENU: SeccionMenu[] = [
     titulo: 'Catálogos',
     opciones: [
       { texto: 'Productos', icono: 'inventory_2', ruta: '/catalogos/productos', permisos: ['CATALOGOS'] },
+      { texto: 'Productos por almacén', icono: 'add_business', ruta: '/catalogos/productos-almacen', permisos: ['CATALOGOS'] },
       { texto: 'Categorías', icono: 'category', ruta: '/catalogos/categorias', permisos: ['CATALOGOS'] },
       { texto: 'Unidades de medida', icono: 'straighten', ruta: '/catalogos/unidades', permisos: ['CATALOGOS'] },
       { texto: 'Clientes', icono: 'groups', ruta: '/catalogos/clientes', permisos: ['CATALOGOS'] },
@@ -58,6 +59,7 @@ export const MENU: SeccionMenu[] = [
       { texto: 'Usuarios', icono: 'manage_accounts', ruta: '/seguridad/usuarios', permisos: ['SEGURIDAD'] },
       { texto: 'Roles', icono: 'admin_panel_settings', ruta: '/seguridad/roles', permisos: ['SEGURIDAD'] },
       { texto: 'Permisos', icono: 'key', ruta: '/seguridad/permisos', permisos: ['SEGURIDAD'] },
+      { texto: 'Roles y permisos', icono: 'rule_settings', ruta: '/seguridad/rol-permisos', permisos: ['SEGURIDAD'] },
     ]
   },
   {

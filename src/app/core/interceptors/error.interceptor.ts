@@ -42,8 +42,12 @@ export function mensajeDeError(error: HttpErrorResponse): string {
     return mensajes.join(' ');
   }
 
+  // NotFound() de un controlador trae cuerpo; si viene vacío es que la API no tiene esa ruta
+  // (por ejemplo, no se reinició después de actualizar el código)
   if (error.status === 404) {
-    return 'El registro no existe';
+    return error.error
+      ? 'El registro no existe'
+      : `La API no tiene la ruta ${error.url?.replace(/^.*\/api\//, 'api/') ?? ''}. Recompile y reinicie la API.`;
   }
 
   return 'Ocurrió un error inesperado';

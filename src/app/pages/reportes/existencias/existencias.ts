@@ -37,7 +37,7 @@ export class Existencias implements OnInit, AfterViewInit {
   private sort = viewChild(MatSort);
   private paginator = viewChild(MatPaginator);
 
-  protected columnas = ['CodigoProducto', 'NombreProducto', 'Categoria', 'Almacen', 'StockActual', 'StockMinimo', 'Costo', 'ValorInventario', 'Alerta', 'acciones'];
+  protected columnas = ['CodigoProducto', 'NombreProducto', 'Categoria', 'Almacen', 'StockActual', 'StockMinimo', 'Costo', 'Precio', 'Alerta', 'acciones'];
   protected datos = new MatTableDataSource<Existencia>([]);
   protected cargando = signal(false);
   protected almacenes = signal<Almacen[]>([]);
@@ -121,7 +121,7 @@ export class Existencias implements OnInit, AfterViewInit {
       { titulo: 'Mínimo', valor: e => e.StockMinimo },
       { titulo: 'Máximo', valor: e => e.StockMaximo },
       { titulo: 'Costo', valor: e => e.Costo },
-      { titulo: 'Valor', valor: e => e.ValorInventario },
+      { titulo: 'Valor', valor: e => e.Precio },
       { titulo: 'Alerta', valor: e => e.Alerta },
     ]);
   }

@@ -1,0 +1,100 @@
+<div class="pagina">
+  <div class="encabezado">
+    <div class="titulo">
+      <span class="icono"><mat-icon>add_business</mat-icon></span>
+      <div>
+        <h1>Productos por almacén</h1>
+        <p>Qué productos maneja cada almacén, cuánto hay y sus límites de stock</p>
+      </div>
+    </div>
+    <div class="acciones">
+      <button mat-flat-button (click)="agregar()" [disabled]="!almacen()">
+        <mat-icon>add</mat-icon> Agregar productos
+      </button>
+    </div>
+  </div>
+
+  <div class="tarjeta">
+    <div class="filtros">
+      <mat-form-field>
+        <mat-label>Almacén</mat-label>
+        <mat-icon matPrefix>warehouse</mat-icon>
+        <mat-select [value]="idAlmacen()" (selectionChange)="cambiarAlmacen($event.value)">
+          @for (a of almacenes(); track a.ID_Almacen) { <mat-option [value]="a.ID_Almacen">{{ a.Nombre }}</mat-option> }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="buscar">
+        <mat-icon matPrefix>search</mat-icon>
+        <input matInput placeholder="Buscar..." [value]="buscar()" (input)="filtrar($any($event.target).value)" />
+      </mat-form-field>
+
+      <span class="contador texto-suave">{{ asignados() }} de {{ productos().length }} productos asignados</span>
+
+      <button mat-icon-button (click)="cargar()" matTooltip="Actualizar"><mat-icon>refresh</mat-icon></button>
+    </div>
+
+    <div class="nota">
+      <mat-icon>info</mat-icon>
+      La existencia que se indica al agregar o editar un producto se registra automáticamente como un ajuste
+      (AJE / AJS), así queda en el kardex y en Documentos. Un producto solo se puede quitar si su existencia es 0.
+    </div>
+
+    @if (cargando()) { <mat-progress-bar mode="indeterminate" /> }
+
+    <div class="tabla-contenedor">
+      <table mat-table [dataSource]="datos" matSort>
+        <ng-container matColumnDef="CodigoProducto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Código</th>
+          <td mat-cell *matCellDef="let f"><strong>{{ f.CodigoProducto }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="NombreProducto">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Producto</th>
+          <td mat-cell *matCellDef="let f">{{ f.NombreProducto }} <span class="texto-suave">({{ f.UnidadMedida }})</span></td>
+        </ng-container>
+        <ng-container matColumnDef="Categoria">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Categoría</th>
+          <td mat-cell *matCellDef="let f">{{ f.Categoria }}</td>
+        </ng-container>
+        <ng-container matColumnDef="StockActual">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Existencia</th>
+          <td mat-cell *matCellDef="let f" class="derecha"><strong>{{ f.StockActual | numero }}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="StockMinimo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Mínimo</th>
+          <td mat-cell *matCellDef="let f" class="derecha">{{ f.StockMinimo || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="StockMaximo">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Máximo</th>
+          <td mat-cell *matCellDef="let f" class="derecha">{{ f.StockMaximo || '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="Alerta">
+          <th mat-header-cell *matHeaderCellDef mat-sort-header>Alerta</th>
+          <td mat-cell *matCellDef="let f"><span class="chip {{ claseAlerta(f.Alerta) }}">{{ f.Alerta }}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef class="derecha">Acciones</th>
+          <td mat-cell *matCellDef="let f" class="derecha acciones-fila">
+            <button mat-icon-button (click)="editar(f)" matTooltip="Editar existencia y límites"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button class="quitar" (click)="quitar(f)" [disabled]="f.StockActual !== 0"
+                    [matTooltip]="f.StockActual !== 0 ? 'Tiene existencia: no se puede quitar' : 'Quitar del almacén'">
+              <mat-icon>remove_circle_outline</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+        <tr mat-row *matRowDef="let f; columns: columnas"></tr>
+        <tr class="mat-row" *matNoDataRow>
+          <td [attr.colspan]="columnas.length">
+            <div class="sin-datos">
+              <mat-icon>add_business</mat-icon>
+              <p>{{ buscar() ? 'No hay resultados' : 'Este almacén todavía no tiene productos asignados' }}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <mat-paginator [pageSizeOptions]="[10, 25, 50]" [pageSize]="10" showFirstLastButtons />
+  </div>
+</div>

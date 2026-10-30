@@ -2,7 +2,7 @@
   <div class="encabezado">
     <div>
       <h1>Existencias</h1>
-      <p>Cuánto hay de cada producto en cada almacén y cuánto vale.</p>
+      <p>Cuánto hay de cada producto en cada almacén y su precio de venta.</p>
     </div>
     <div class="acciones">
       <button mat-stroked-button (click)="exportar()"><mat-icon>download</mat-icon> Exportar a Excel</button>
@@ -17,7 +17,8 @@
         <div class="cifras">
           <div><small>Productos</small><strong>{{ r.Productos | numero }}</strong></div>
           <div><small>Unidades</small><strong>{{ r.Unidades | numero }}</strong></div>
-          <div><small>Valor</small><strong>{{ r.ValorInventario | moneda }}</strong></div>
+          <!-- Existencia x costo de compra (no es el precio de venta) -->
+          <div><small>Costo total</small><strong>{{ r.ValorInventario | moneda }}</strong></div>
         </div>
       </div>
     }
@@ -60,7 +61,7 @@
 
       <span class="texto-suave totales">
         @if (bajos() > 0) { <span class="chip peligro">{{ bajos() }} con stock bajo</span> }
-        Valor: <strong>{{ valorTotal() | moneda }}</strong>
+        Costo total: <strong>{{ valorTotal() | moneda }}</strong>
       </span>
     </div>
 
@@ -93,12 +94,13 @@
           <td mat-cell *matCellDef="let e" class="derecha texto-suave">{{ e.StockMinimo || '—' }} / {{ e.StockMaximo || '—' }}</td>
         </ng-container>
         <ng-container matColumnDef="Costo">
-          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Costo prom.</th>
+          <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Costo compra</th>
           <td mat-cell *matCellDef="let e" class="derecha monto">{{ e.Costo | moneda }}</td>
         </ng-container>
-        <ng-container matColumnDef="ValorInventario">
+        <!-- Valor = precio de venta del producto -->
+        <ng-container matColumnDef="Precio">
           <th mat-header-cell *matHeaderCellDef mat-sort-header class="derecha">Valor</th>
-          <td mat-cell *matCellDef="let e" class="derecha monto">{{ e.ValorInventario | moneda }}</td>
+          <td mat-cell *matCellDef="let e" class="derecha monto">{{ e.Precio | moneda }}</td>
         </ng-container>
         <ng-container matColumnDef="Alerta">
           <th mat-header-cell *matHeaderCellDef mat-sort-header>Alerta</th>

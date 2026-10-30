@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -23,13 +24,17 @@ interface DatosFormulario {
   selector: 'app-formulario-dialog',
   imports: [
     ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatSelectModule,
-    MatCheckboxModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
+    MatCheckboxModule, MatSlideToggleModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule,
   ],
   templateUrl: './formulario-dialog.html',
   styles: `
     .titulo { display: flex; align-items: center; gap: 10px; }
     .titulo mat-icon { color: var(--app-primario); }
     .checkbox { padding: 4px 0 12px; }
+    .estado { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 16px;
+              margin: 4px 0 8px; border: 1px solid var(--app-borde); border-radius: 12px; background: #f8f9fc; }
+    .estado strong { display: block; font-size: 14px; }
+    .estado small { color: var(--app-texto-suave); font-size: 12px; }
     mat-form-field { margin-bottom: 4px; }
   `,
 })
@@ -42,8 +47,14 @@ export class FormularioDialog {
   protected esNuevo = this.datos.fila === null;
   protected guardando = signal(false);
 
-  // Campos que se muestran según sea nuevo o edición
-  protected campos = this.datos.config.campos.filter(c => (this.esNuevo ? !c.soloEditar : !c.soloCrear));
+  // Campos que se muestran según sea nuevo o edición. Si el mantenimiento maneja estado y la configuración
+  // no lo trae, se agrega al final el interruptor Activo / Inactivo (al crear viene activo por defecto)
+  protected campos: CampoMantenimiento[] = [
+    ...this.datos.config.campos.filter(c => (this.esNuevo ? !c.soloEditar : !c.soloCrear)),
+    ...(this.datos.config.estado !== 'ninguno' && !this.datos.config.campos.some(c => c.nombre === 'Estado')
+      ? [{ nombre: 'Estado', etiqueta: 'Estado', tipo: 'estado' as const, valorDefecto: true }]
+      : []),
+  ];
 
   protected form = new FormGroup(
     Object.fromEntries(this.campos.map(campo => [campo.nombre, this.crearControl(campo)]))
@@ -56,7 +67,7 @@ export class FormularioDialog {
     if (fila) {
       valor = campo.valorInicial ? campo.valorInicial(fila) : fila[campo.nombre];
     } else {
-      valor = campo.valorDefecto ?? (campo.tipo === 'checkbox' ? true : campo.tipo === 'multiselect' ? [] : null);
+      valor = campo.valorDefecto ?? (campo.tipo === 'checkbox' || campo.tipo === 'estado' ? true : campo.tipo === 'multiselect' ? [] : null);
     }
 
     const validadores: ValidatorFn[] = [];
