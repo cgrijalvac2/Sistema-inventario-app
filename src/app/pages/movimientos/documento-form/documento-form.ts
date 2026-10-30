@@ -10,7 +10,8 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
@@ -19,6 +20,8 @@ import {
   CodigoTipo, Existencia, MotivoAjuste, OrdenCompra, ParametroSistema, Producto, Tercero, Transaccion, TransaccionRequest,
 } from '../../../core/models/modelos';
 import { BuscadorProducto, ProductoBuscable } from '../../../shared/buscador-producto/buscador-producto';
+import { FormularioDialog } from '../../../shared/mantenimiento/formulario-dialog';
+import { CONFIGURACIONES } from '../../mantenimientos/configuraciones';
 
 export type Modo = 'VENTA' | 'COMPRA' | 'NOTA_CLIENTE' | 'NOTA_PROVEEDOR' | 'AJUSTE';
 
@@ -40,6 +43,27 @@ interface Linea {
   Maximo: number | null;     // tope por orden de compra o documento de origen
 }
 
+// Razones de una nota de crédito. Cada una indica si por defecto mueve el inventario
+// (cliente: el producto regresa; proveedor: el producto sale porque se le devuelve)
+interface RazonNota {
+  texto: string;
+  devuelve: boolean;
+}
+
+const RAZONES_NC: Record<'CLIENTE' | 'PROVEEDOR', RazonNota[]> = {
+  CLIENTE: [
+    { texto: 'Devolución del producto', devuelve: true },
+    { texto: 'Producto dañado o defectuoso (no regresa al inventario)', devuelve: false },
+    { texto: 'Descuento o rebaja posterior a la venta', devuelve: false },
+    { texto: 'Error en el precio facturado', devuelve: false },
+  ],
+  PROVEEDOR: [
+    { texto: 'Devolución de producto al proveedor', devuelve: true },
+    { texto: 'Descuento o bonificación del proveedor', devuelve: false },
+    { texto: 'Error en el precio facturado', devuelve: false },
+  ],
+};
+
 // Textos y comportamiento de cada pantalla
 const MODOS: Record<Modo, { titulo: string; subtitulo: string; icono: string; tercero: 'CLIENTE' | 'PROVEEDOR' | null }> = {
   VENTA: { titulo: 'Nueva venta', subtitulo: 'La mercadería sale del almacén', icono: 'point_of_sale', tercero: 'CLIENTE' },
@@ -53,7 +77,7 @@ const MODOS: Record<Modo, { titulo: string; subtitulo: string; icono: string; te
   selector: 'app-documento-form',
   imports: [
     FormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule, MatButtonModule, MatButtonToggleModule,
-    MatIconModule, MatTooltipModule, MatProgressSpinnerModule, BuscadorProducto, ...PIPES_FORMATO,
+    MatIconModule, MatTooltipModule, MatProgressSpinnerModule, MatSlideToggleModule, BuscadorProducto, ...PIPES_FORMATO,
   ],
   templateUrl: './documento-form.html',
   styleUrl: './documento-form.scss',
@@ -70,10 +94,13 @@ export class DocumentoForm implements OnInit {
   private auth = inject(AuthService);
   private notificacion = inject(NotificacionService);
   private route = inject(ActivatedRoute);
+  private dialog = inject(MatDialog);
   private huboRegistros = false;
 
   protected info = computed(() => MODOS[this.modo()]);
   protected almacen = this.auth.almacenActual;
+  // Al recibir una orden de compra la mercadería entra al almacén de la orden (puede no ser el actual)
+  protected nombreAlmacen = computed(() => this.orden()?.Almacen ?? this.almacen()?.Nombre ?? 'Sin almacén');
 
   // Variante elegida en notas (crédito / débito) y ajustes (entrada / salida)
   protected tipoNota = signal<'NC' | 'ND'>('NC');
@@ -89,10 +116,18 @@ export class DocumentoForm implements OnInit {
     }
   });
 
-  // ¿Este documento saca mercadería del almacén? (para avisar si no alcanza el stock)
-  protected esSalida = computed(() => ['VENTA', 'NC_COMPRA', 'AJUSTE_SALIDA'].includes(this.codigoTipo()));
   protected esAjuste = computed(() => this.modo() === 'AJUSTE');
   protected esNota = computed(() => this.modo() === 'NOTA_CLIENTE' || this.modo() === 'NOTA_PROVEEDOR');
+  protected esNotaCredito = computed(() => this.esNota() && this.tipoNota() === 'NC');
+
+  // Nota de crédito: razón y si mueve el inventario (se sugiere según la razón y se puede cambiar)
+  protected razonesNota = computed(() => RAZONES_NC[this.modo() === 'NOTA_CLIENTE' ? 'CLIENTE' : 'PROVEEDOR']);
+  protected razonNota = signal<string | null>(null);
+  protected devuelveInventario = signal(true);
+
+  // ¿Este documento saca mercadería del almacén? (para avisar si no alcanza el stock)
+  protected esSalida = computed(() =>
+    ['VENTA', 'AJUSTE_SALIDA'].includes(this.codigoTipo()) || (this.codigoTipo() === 'NC_COMPRA' && this.devuelveInventario()));
   protected etiquetaPrecio = computed(() =>
     this.modo() === 'COMPRA' || this.modo() === 'NOTA_PROVEEDOR' || this.esAjuste() ? 'Costo unit.' : 'Precio unit.');
 
@@ -137,10 +172,12 @@ export class DocumentoForm implements OnInit {
       }));
     }
     const usaCosto = this.etiquetaPrecio() === 'Costo unit.';
-    return this.productos().map(p => ({
+    const productos = this.productos().map(p => ({
       ID_Producto: p.ID_Producto, CodigoProducto: p.CodigoProducto, NombreProducto: p.NombreProducto,
       Precio: usaCosto ? p.Costo : p.Precio, Stock: stock.get(p.ID_Producto) ?? 0,
     }));
+    // En ventas solo se ofrecen los productos que tienen existencia en el almacén
+    return this.modo() === 'VENTA' ? productos.filter(p => p.Stock > 0) : productos;
   });
 
   // ---------- Totales (el cálculo oficial lo hace el SP; esto es la vista previa) ----------
@@ -201,6 +238,34 @@ export class DocumentoForm implements OnInit {
   protected cambiarTipoNota(tipo: 'NC' | 'ND'): void {
     this.tipoNota.set(tipo);
     this.lineas.set([]);
+    this.razonNota.set(null);
+    this.devuelveInventario.set(true);
+  }
+
+  // Venta: crea el cliente con el mismo formulario del mantenimiento de Clientes y lo deja seleccionado
+  protected nuevoCliente(): void {
+    this.dialog.open(FormularioDialog, {
+      data: { config: CONFIGURACIONES.clientes, fila: null, opciones: {} },
+      width: '560px',
+      maxWidth: '95vw',
+    }).afterClosed().subscribe(creado => {
+      if (!creado) {
+        return;
+      }
+      this.api.get<Tercero[]>('Clientes', { soloActivos: true }).subscribe(clientes => {
+        this.terceros.set(clientes);
+        // El cliente recién creado es el de ID más alto
+        const nuevo = clientes.reduce<Tercero | null>((max, c) => (!max || c.ID_Cliente! > max.ID_Cliente! ? c : max), null);
+        if (nuevo) {
+          this.elegirTercero(nuevo.ID_Cliente!);
+        }
+      });
+    });
+  }
+
+  protected elegirRazon(texto: string): void {
+    this.razonNota.set(texto);
+    this.devuelveInventario.set(this.razonesNota().find(r => r.texto === texto)?.devuelve ?? true);
   }
 
   protected cambiarTipoAjuste(tipo: 'ENTRADA' | 'SALIDA'): void {
@@ -304,23 +369,31 @@ export class DocumentoForm implements OnInit {
     this.lineas().length > 0 &&
     this.lineas().every(l => l.Cantidad > 0 && l.PrecioUnitario >= 0 && (!this.esAjuste() || l.ID_Motivo)) &&
     (this.info().tercero === null || !!this.idTercero()) &&
-    (!this.esNota() || !!this.idOrigen())
+    (!this.esNota() || !!this.idOrigen()) &&
+    (!this.esNotaCredito() || !!this.razonNota())
   );
 
   protected guardar(): void {
     const esCliente = this.info().tercero === 'CLIENTE';
     const esProveedor = this.info().tercero === 'PROVEEDOR';
 
+    // En notas de crédito la razón queda guardada al inicio de las observaciones
+    let observaciones = this.observaciones().trim();
+    if (this.esNotaCredito()) {
+      observaciones = [`Razón: ${this.razonNota()}`, observaciones].filter(t => t).join(' | ').slice(0, 255);
+    }
+
     const solicitud: TransaccionRequest = {
       CodigoTipoTransaccion: this.codigoTipo(),
       ID_Usuario: this.auth.idUsuario,
-      ID_Almacen: this.auth.idAlmacen()!,
+      ID_Almacen: this.orden()?.ID_Almacen ?? this.auth.idAlmacen()!,
       ID_Cliente: esCliente ? this.idTercero() : null,
       ID_Proveedor: esProveedor ? this.idTercero() : null,
       ID_OrdenCompra: this.idOrden(),
       ID_TransaccionOrigen: this.idOrigen(),
       Referencia: this.referencia().trim() || null,
-      Observaciones: this.observaciones().trim() || null,
+      Observaciones: observaciones || null,
+      DevuelveInventario: this.esNotaCredito() ? this.devuelveInventario() : null,
       Detalles: this.lineas().map(l => ({
         ID_Producto: l.ID_Producto,
         Cantidad: l.Cantidad,
@@ -358,6 +431,8 @@ export class DocumentoForm implements OnInit {
     this.origen.set(null);
     this.referencia.set('');
     this.observaciones.set('');
+    this.razonNota.set(null);
+    this.devuelveInventario.set(true);
     this.ordenes.set([]);
     this.documentosOrigen.set([]);
     this.api.get<Existencia[]>('Inventario/existencias', { idAlmacen: this.auth.idAlmacen() })

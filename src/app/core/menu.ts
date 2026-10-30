@@ -36,7 +36,7 @@ export const MENU: SeccionMenu[] = [
     titulo: 'Consultas y reportes',
     opciones: [
       { texto: 'Existencias', icono: 'inventory', ruta: '/reportes/existencias', permisos: ['REPORTES'] },
-      { texto: 'Kardex', icono: 'timeline', ruta: '/reportes/kardex', permisos: ['REPORTES'] },
+      { texto: 'Reportería general', icono: 'timeline', ruta: '/reportes/kardex', permisos: ['REPORTES'] },
       { texto: 'Entradas y salidas', icono: 'swap_vert', ruta: '/reportes/movimientos', permisos: ['REPORTES'] },
     ]
   },

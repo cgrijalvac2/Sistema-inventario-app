@@ -46,12 +46,25 @@ export class OrdenCompraForm implements OnInit {
   private notificacion = inject(NotificacionService);
 
   protected esNueva = computed(() => !this.id());
-  protected almacen = this.auth.almacenActual;
   protected guardando = signal(false);
   protected proveedores = signal<Tercero[]>([]);
   protected productos = signal<ProductoBuscable[]>([]);
-  protected iva = signal(0);
   protected numero = signal('');
+
+  // Almacén al que irá la mercadería: por defecto el actual, se puede elegir entre los del usuario
+  protected almacenes = this.auth.almacenes;
+  protected idAlmacen = signal<number | null>(this.auth.idAlmacen());
+  protected almacen = computed(() => this.almacenes().find(a => a.ID_Almacen === this.idAlmacen()) ?? null);
+
+  // Unidad de medida de cada producto (ID_Producto -> abreviatura)
+  private unidades = signal<Map<number, string>>(new Map());
+
+  // IVA del almacén elegido; si no tiene uno propio, el global
+  private parametros = signal<ParametroSistema[]>([]);
+  protected iva = computed(() => {
+    const ivas = this.parametros().filter(p => p.Clave === 'IVA_PORCENTAJE' && p.Estado);
+    return Number((ivas.find(p => p.ID_Almacen === this.idAlmacen()) ?? ivas.find(p => p.ID_Almacen === null))?.Valor ?? 0);
+  });
 
   protected idProveedor = signal<number | null>(null);
   protected fechaEsperada = signal<Date | null>(null);
@@ -67,8 +80,6 @@ export class OrdenCompraForm implements OnInit {
     this.lineas().every(l => l.Cantidad > 0 && l.CostoUnitario >= 0));
 
   ngOnInit(): void {
-    const idAlmacen = this.auth.idAlmacen();
-
     forkJoin({
       proveedores: this.api.get<Tercero[]>('Proveedores', { soloActivos: true }),
       productos: this.api.get<Producto[]>('Productos', { soloActivos: true }),
@@ -77,14 +88,15 @@ export class OrdenCompraForm implements OnInit {
       this.proveedores.set(r.proveedores);
       // En compras se sugiere el costo actual del producto
       this.productos.set(r.productos.map(p => ({ ...p, Precio: p.Costo })));
-      const ivas = r.parametros.filter(p => p.Clave === 'IVA_PORCENTAJE' && p.Estado);
-      this.iva.set(Number((ivas.find(p => p.ID_Almacen === idAlmacen) ?? ivas.find(p => p.ID_Almacen === null))?.Valor ?? 0));
+      this.unidades.set(new Map(r.productos.map(p => [p.ID_Producto, p.UnidadMedida])));
+      this.parametros.set(r.parametros);
     });
 
     if (this.id()) {
       this.api.get<OrdenCompra>(`OrdenesCompra/${this.id()}`).subscribe(orden => {
         this.numero.set(orden.NumeroOrden);
         this.idProveedor.set(orden.ID_Proveedor);
+        this.idAlmacen.set(orden.ID_Almacen);
         this.fechaEsperada.set(orden.FechaEsperada ? new Date(orden.FechaEsperada) : null);
         this.observaciones.set(orden.Observaciones ?? '');
         this.lineas.set(orden.Detalles.map(d => ({
@@ -114,10 +126,14 @@ export class OrdenCompraForm implements OnInit {
     this.lineas.update(ls => ls.filter(l => l !== linea));
   }
 
+  protected unidad(idProducto: number): string {
+    return this.unidades().get(idProducto) ?? '';
+  }
+
   protected guardar(): void {
     const solicitud = {
       ID_Proveedor: this.idProveedor(),
-      ID_Almacen: this.auth.idAlmacen(),
+      ID_Almacen: this.idAlmacen(),
       ID_Usuario: this.auth.idUsuario,
       FechaEsperada: this.fechaEsperada() ? fechaIso(this.fechaEsperada()!) : null,
       Observaciones: this.observaciones().trim() || null,

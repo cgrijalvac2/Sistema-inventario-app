@@ -8,6 +8,9 @@
       </div>
     </div>
     <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="permisos().length === 0">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
       <a mat-stroked-button routerLink="/seguridad/roles"><mat-icon>admin_panel_settings</mat-icon> Roles</a>
       <a mat-stroked-button routerLink="/seguridad/permisos"><mat-icon>key</mat-icon> Permisos</a>
       <button mat-icon-button (click)="cargar()" matTooltip="Actualizar"><mat-icon>refresh</mat-icon></button>

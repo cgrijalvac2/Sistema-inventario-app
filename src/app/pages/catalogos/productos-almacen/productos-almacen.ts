@@ -18,6 +18,7 @@ import { NotificacionService } from '../../../core/services/notificacion.service
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Almacen, Existencia, Producto } from '../../../core/models/modelos';
 import { ConfirmarDialog } from '../../../shared/confirmar-dialog/confirmar-dialog';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { AsignarProductosDialog } from './asignar-productos-dialog';
 import { EditarProductoAlmacenDialog } from './editar-producto-almacen-dialog';
 
@@ -128,6 +129,26 @@ export class ProductosAlmacen implements OnInit, AfterViewInit {
         this.cargar();
       });
     });
+  }
+
+  // Exporta los productos del almacén (con la búsqueda y el orden de la tabla)
+  protected exportar(): void {
+    const sort = this.sort();
+    const filas = sort ? this.datos.sortData(this.datos.filteredData.slice(), sort) : this.datos.filteredData;
+    exportarExcel(`productos-${this.almacen()?.Codigo ?? 'almacen'}`, filas, [
+      { titulo: 'Almacén', valor: f => f.Almacen },
+      { titulo: 'Código', valor: f => f.CodigoProducto },
+      { titulo: 'Producto', valor: f => f.NombreProducto },
+      { titulo: 'Categoría', valor: f => f.Categoria },
+      { titulo: 'Unidad', valor: f => f.UnidadMedida },
+      { titulo: 'Existencia', valor: f => f.StockActual },
+      { titulo: 'Stock mínimo', valor: f => f.StockMinimo },
+      { titulo: 'Stock máximo', valor: f => f.StockMaximo },
+      { titulo: 'Costo', valor: f => f.Costo },
+      { titulo: 'Precio de venta', valor: f => f.Precio },
+      { titulo: 'Valor del inventario', valor: f => f.ValorInventario },
+      { titulo: 'Alerta', valor: f => f.Alerta },
+    ]);
   }
 
   protected claseAlerta(alerta: string): string {

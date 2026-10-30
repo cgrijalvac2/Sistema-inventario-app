@@ -16,7 +16,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Almacen, Categoria, Existencia, ResumenAlmacen } from '../../../core/models/modelos';
-import { exportarCsv } from '../../../shared/exportar-csv';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { LimitesDialog } from './limites-dialog';
 
 // Listado de existencias por almacén con alertas de stock bajo / exceso
@@ -111,7 +111,7 @@ export class Existencias implements OnInit, AfterViewInit {
   }
 
   protected exportar(): void {
-    exportarCsv('existencias', this.datos.filteredData, [
+    exportarExcel('existencias', this.datos.filteredData, [
       { titulo: 'Almacén', valor: e => e.Almacen },
       { titulo: 'Código', valor: e => e.CodigoProducto },
       { titulo: 'Producto', valor: e => e.NombreProducto },

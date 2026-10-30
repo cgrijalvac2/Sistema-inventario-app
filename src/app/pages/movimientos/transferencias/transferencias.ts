@@ -12,6 +12,7 @@ import { NotificacionService } from '../../../core/services/notificacion.service
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Transferencia } from '../../../core/models/modelos';
 import { ConfirmarDialog } from '../../../shared/confirmar-dialog/confirmar-dialog';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { ESTADOS_CLASE } from '../tipos';
 
 type Vista = 'POR_RECIBIR' | 'ENVIADAS' | 'TODAS';
@@ -100,6 +101,22 @@ export class Transferencias implements OnInit {
           .subscribe(() => this.terminar(`Transferencia ${t.NumeroTransferencia} rechazada`));
       }
     });
+  }
+
+  // Exporta las transferencias de la vista elegida (por recibir, enviadas o todas)
+  protected exportar(): void {
+    exportarExcel('transferencias', this.lista(), [
+      { titulo: 'Número', valor: t => t.NumeroTransferencia },
+      { titulo: 'Almacén origen', valor: t => t.AlmacenOrigen },
+      { titulo: 'Almacén destino', valor: t => t.AlmacenDestino },
+      { titulo: 'Enviada por', valor: t => t.UsuarioEnvia },
+      { titulo: 'Fecha de envío', valor: t => t.FechaEnvio },
+      { titulo: 'Recibida / rechazada por', valor: t => t.UsuarioRecibe },
+      { titulo: 'Fecha de recepción', valor: t => t.FechaRecepcion },
+      { titulo: 'Estado', valor: t => t.Estado },
+      { titulo: 'Motivo de rechazo', valor: t => t.MotivoRechazo },
+      { titulo: 'Observaciones', valor: t => t.Observaciones },
+    ]);
   }
 
   private terminar(mensaje: string): void {

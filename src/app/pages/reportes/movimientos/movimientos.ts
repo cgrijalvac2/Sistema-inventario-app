@@ -14,7 +14,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Almacen, Movimiento } from '../../../core/models/modelos';
-import { exportarCsv } from '../../../shared/exportar-csv';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { inicioDeMes } from '../../movimientos/tipos';
 
 // Registro de movimientos de entrada y salida de todos los productos
@@ -73,7 +73,7 @@ export class Movimientos implements OnInit, AfterViewInit {
   }
 
   protected exportar(): void {
-    exportarCsv('entradas-y-salidas', this.lista(), [
+    exportarExcel('entradas-y-salidas', this.lista(), [
       { titulo: 'Fecha', valor: m => m.FechaRegistro },
       { titulo: 'Tipo', valor: m => m.TipoMovimiento },
       { titulo: 'Documento', valor: m => m.Documento },

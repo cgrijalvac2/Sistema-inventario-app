@@ -5,6 +5,9 @@
       <p>Pedidos a proveedores. La mercadería entra al inventario cuando se recibe con una compra.</p>
     </div>
     <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="datos.filteredData.length === 0">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
       <a mat-flat-button routerLink="/movimientos/ordenes-compra/nueva"><mat-icon>add</mat-icon> Nueva orden</a>
     </div>
   </div>

@@ -5,6 +5,9 @@
       <p>Traslados entre almacenes. Al enviar sale del origen; al recibir entra al destino; si se rechaza regresa.</p>
     </div>
     <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="lista().length === 0">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
       <a mat-flat-button routerLink="/movimientos/transferencias/nueva"><mat-icon>add</mat-icon> Nueva transferencia</a>
     </div>
   </div>

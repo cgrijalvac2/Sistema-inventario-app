@@ -4,6 +4,11 @@
       <h1>Documentos</h1>
       <p>Compras, ventas, notas y ajustes registrados. Haga clic en un documento para verlo o anularlo.</p>
     </div>
+    <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="datos.filteredData.length === 0">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
+    </div>
   </div>
 
   <div class="tarjeta">

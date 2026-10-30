@@ -12,9 +12,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Almacen, Movimiento, Producto } from '../../../core/models/modelos';
 import { BuscadorProducto, ProductoBuscable } from '../../../shared/buscador-producto/buscador-producto';
-import { exportarCsv } from '../../../shared/exportar-csv';
+import { exportarExcel } from '../../../shared/exportar-excel';
 
-// Historial (entradas, salidas y saldo) de un producto
+// Reportería general: todos los movimientos de HistorialMovimientos (transacciones, notas, ajustes y transferencias).
+// Al elegir un producto muestra su kardex (entradas, salidas y saldo en orden cronológico)
 @Component({
   selector: 'app-kardex',
   imports: [
@@ -56,6 +57,8 @@ export class Kardex implements OnInit {
       this.productos.set(r.productos.map(p => ({ ...p, Stock: p.StockTotal })));
       this.almacenes.set(r.almacenes);
     });
+    // Sin producto elegido se muestra la reportería general
+    this.cargar();
   }
 
   protected elegir(producto: ProductoBuscable): void {
@@ -63,15 +66,21 @@ export class Kardex implements OnInit {
     this.cargar();
   }
 
+  protected quitarProducto(): void {
+    this.producto.set(null);
+    this.cargar();
+  }
+
   protected cargar(): void {
     const producto = this.producto();
-    if (!producto) {
-      return;
-    }
+    const filtros = { idAlmacen: this.idAlmacen(), desde: this.desde(), hasta: this.hasta() };
+
     this.cargando.set(true);
-    this.api.get<Movimiento[]>('Inventario/kardex', {
-      idProducto: producto.ID_Producto, idAlmacen: this.idAlmacen(), desde: this.desde(), hasta: this.hasta(),
-    }).subscribe({
+    const peticion = producto
+      ? this.api.get<Movimiento[]>('Inventario/kardex', { idProducto: producto.ID_Producto, ...filtros })
+      : this.api.get<Movimiento[]>('Inventario/movimientos', filtros);
+
+    peticion.subscribe({
       next: lista => {
         this.movimientos.set(lista);
         this.cargando.set(false);
@@ -81,9 +90,11 @@ export class Kardex implements OnInit {
   }
 
   protected exportar(): void {
-    exportarCsv(`kardex-${this.producto()?.CodigoProducto}`, this.movimientos(), [
+    const producto = this.producto();
+    exportarExcel(producto ? `kardex-${producto.CodigoProducto}` : 'reporteria-general', this.movimientos(), [
       { titulo: 'Fecha', valor: m => m.FechaRegistro },
       { titulo: 'Documento', valor: m => m.Documento },
+      { titulo: 'Producto', valor: m => `${m.CodigoProducto} ${m.NombreProducto}` },
       { titulo: 'Concepto', valor: m => m.Concepto },
       { titulo: 'Almacén', valor: m => m.Almacen },
       { titulo: 'Entrada', valor: m => m.Entrada },

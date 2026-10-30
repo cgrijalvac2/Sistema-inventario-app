@@ -5,6 +5,9 @@
       <p>Resumen de {{ soloAlmacen() ? (auth.almacenActual()?.Nombre ?? 'su almacén') : 'todos los almacenes' }}</p>
     </div>
     <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="!indicadores()">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
       <mat-button-toggle-group [value]="soloAlmacen()" (change)="cambiarAlcance($event.value)" hideSingleSelectionIndicator>
         <mat-button-toggle [value]="true">Este almacén</mat-button-toggle>
         <mat-button-toggle [value]="false">Todos</mat-button-toggle>

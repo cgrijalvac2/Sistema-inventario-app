@@ -8,14 +8,18 @@
       </div>
     </div>
 
-    @if (config().permiteCrear !== false) {
-      <div class="acciones">
+    <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="datos.filteredData.length === 0">
+        <mat-icon>download</mat-icon>
+        Exportar a Excel
+      </button>
+      @if (config().permiteCrear !== false) {
         <button mat-flat-button (click)="nuevo()">
           <mat-icon>add</mat-icon>
           Nuevo {{ config().nombreSingular }}
         </button>
-      </div>
-    }
+      }
+    </div>
   </div>
 
   <div class="tarjeta">

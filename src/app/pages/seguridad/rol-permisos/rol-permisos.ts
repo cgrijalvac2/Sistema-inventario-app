@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ApiService } from '../../../core/services/api.service';
 import { NotificacionService } from '../../../core/services/notificacion.service';
+import { ColumnaExcel, exportarExcel } from '../../../shared/exportar-excel';
 
 interface RolSimple { ID_Rol: number; NombreRol: string; Descripcion: string | null; Estado: boolean; }
 interface PermisoFila { ID_Permiso: number; Codigo: string; Nombre: string; Descripcion: string | null; }
@@ -112,6 +113,19 @@ export class RolPermisos implements OnInit {
       },
       error: () => this.cargar(),
     });
+  }
+
+  // Exporta la matriz: una fila por permiso y una columna por rol ("Sí" cuando el rol lo tiene)
+  protected exportar(): void {
+    const columnas: ColumnaExcel<PermisoFila>[] = [
+      { titulo: 'Código', valor: p => p.Codigo },
+      { titulo: 'Permiso', valor: p => p.Nombre },
+      ...this.roles().map(rol => ({
+        titulo: rol.NombreRol,
+        valor: (p: PermisoFila) => (this.tiene(rol.ID_Rol, p.ID_Permiso) ? 'Sí' : ''),
+      })),
+    ];
+    exportarExcel('roles-y-permisos', this.permisos(), columnas);
   }
 
   private marcarLocal(llave: string, marcado: boolean): void {

@@ -133,6 +133,8 @@ export interface TransaccionRequest {
   ID_TransaccionOrigen: number | null;
   Referencia: string | null;
   Observaciones: string | null;
+  // Solo notas de crédito: true = el producto regresa / sale del inventario, false = no lo mueve
+  DevuelveInventario?: boolean | null;
   Detalles: TransaccionDetalleRequest[];
 }
 

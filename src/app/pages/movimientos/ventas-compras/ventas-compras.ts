@@ -17,7 +17,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Tercero, Transaccion } from '../../../core/models/modelos';
-import { exportarCsv } from '../../../shared/exportar-csv';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { DocumentoForm, DatosDocumentoModal } from '../documento-form/documento-form';
 import { DocumentoDetalleDialog } from '../documentos/documento-detalle-dialog';
 import { ESTADOS_CLASE, inicioDeMes } from '../tipos';
@@ -173,7 +173,7 @@ export class VentasCompras implements OnInit, AfterViewInit {
   }
 
   protected exportar(): void {
-    exportarCsv(this.textos().titulo.toLowerCase(), this.datos.filteredData, [
+    exportarExcel(this.textos().titulo.toLowerCase(), this.datos.filteredData, [
       { titulo: 'Número', valor: d => d.NumeroDocumento },
       { titulo: 'Fecha', valor: d => d.Fecha },
       { titulo: this.textos().tercero, valor: d => d.Cliente ?? d.Proveedor },

@@ -16,6 +16,7 @@ import { ApiService } from '../../../core/services/api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { Transaccion } from '../../../core/models/modelos';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { ESTADOS_CLASE, TIPOS_DOCUMENTO, inicioDeMes } from '../tipos';
 import { DocumentoDetalleDialog } from './documento-detalle-dialog';
 
@@ -94,6 +95,29 @@ export class Documentos implements OnInit, AfterViewInit {
 
   protected infoTipo(doc: Transaccion) {
     return TIPOS_DOCUMENTO[doc.CodigoTipoTransaccion];
+  }
+
+  // Exporta los documentos filtrados en el orden de la tabla
+  protected exportar(): void {
+    const sort = this.sort();
+    const filas = sort ? this.datos.sortData(this.datos.filteredData.slice(), sort) : this.datos.filteredData;
+    exportarExcel('documentos', filas, [
+      { titulo: 'Número', valor: d => d.NumeroDocumento },
+      { titulo: 'Tipo', valor: d => d.TipoTransaccion },
+      { titulo: 'Fecha', valor: d => d.Fecha },
+      { titulo: 'Cliente / Proveedor', valor: d => d.Cliente ?? d.Proveedor },
+      { titulo: 'Almacén', valor: d => d.Almacen },
+      { titulo: 'Documento origen', valor: d => d.DocumentoOrigen },
+      { titulo: 'Orden de compra', valor: d => d.NumeroOrden },
+      { titulo: 'Referencia', valor: d => d.Referencia },
+      { titulo: 'Subtotal', valor: d => d.Subtotal },
+      { titulo: 'Descuento', valor: d => d.Descuento },
+      { titulo: 'IVA', valor: d => d.Impuesto },
+      { titulo: 'Total', valor: d => d.Total },
+      { titulo: 'Estado', valor: d => d.Estado },
+      { titulo: 'Usuario', valor: d => d.Usuario },
+      { titulo: 'Observaciones', valor: d => d.Observaciones },
+    ]);
   }
 
   protected ver(doc: Transaccion): void {

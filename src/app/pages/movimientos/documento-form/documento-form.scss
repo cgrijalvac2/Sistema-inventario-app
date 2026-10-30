@@ -1,1 +1,14 @@
 @use '../formularios-movimiento';
+
+// Nota de crédito: interruptor "mueve inventario" junto a la razón
+.mueve-inventario {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding-bottom: 20px;
+
+  small {
+    font-size: 12px;
+  }
+}

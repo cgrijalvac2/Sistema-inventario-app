@@ -27,6 +27,15 @@
           </mat-form-field>
 
           <mat-form-field>
+            <mat-label>Almacén que recibe</mat-label>
+            <mat-select [value]="idAlmacen()" (selectionChange)="idAlmacen.set($event.value)">
+              @for (a of almacenes(); track a.ID_Almacen) {
+                <mat-option [value]="a.ID_Almacen">{{ a.Nombre }} <span class="texto-suave">· {{ a.Codigo }}</span></mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field>
             <mat-label>Fecha esperada de entrega</mat-label>
             <input matInput [matDatepicker]="picker" [value]="fechaEsperada()" (dateChange)="fechaEsperada.set($event.value)" />
             <mat-datepicker-toggle matIconSuffix [for]="picker" />
@@ -50,8 +59,9 @@
               <thead>
                 <tr>
                   <th>Producto</th>
+                  <th>Unidad</th>
                   <th class="num">Cantidad</th>
-                  <th class="num">Costo unit.</th>
+                  <th class="num">Costo por unidad</th>
                   <th class="num">Descuento</th>
                   <th class="num">Total</th>
                   <th></th>
@@ -61,6 +71,7 @@
                 @for (linea of lineas(); track linea.ID_Producto) {
                   <tr>
                     <td><strong>{{ linea.NombreProducto }}</strong><div class="sub">{{ linea.CodigoProducto }}</div></td>
+                    <td><span class="chip">{{ unidad(linea.ID_Producto) || '—' }}</span></td>
                     <td class="num">
                       <input class="campo numero" type="number" min="1" [class.invalido]="linea.Cantidad <= 0"
                              [ngModel]="linea.Cantidad" (ngModelChange)="actualizar(linea, 'Cantidad', $event)" />

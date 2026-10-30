@@ -15,6 +15,7 @@ import { ApiService } from '../../core/services/api.service';
 import { NotificacionService } from '../../core/services/notificacion.service';
 import { PIPES_FORMATO } from '../../core/pipes/formato.pipes';
 import { ConfirmarDialog } from '../confirmar-dialog/confirmar-dialog';
+import { exportarExcel } from '../exportar-excel';
 import { FormularioDialog } from './formulario-dialog';
 import { ColumnaMantenimiento, ConfigMantenimiento, Opcion } from './mantenimiento.models';
 
@@ -164,6 +165,25 @@ export class Mantenimiento implements OnInit, AfterViewInit {
         this.cargar();
       });
     });
+  }
+
+  // Exporta a Excel lo que se ve en la tabla (con la búsqueda y el orden aplicados), con las mismas columnas
+  protected exportar(): void {
+    const config = this.config();
+    const sort = this.sort();
+    const filas = sort ? this.datos.sortData(this.datos.filteredData.slice(), sort) : this.datos.filteredData;
+
+    exportarExcel(config.titulo.toLowerCase().replace(/\s+/g, '-'), filas, config.columnas.map(columna => ({
+      titulo: columna.titulo,
+      valor: (fila: any) => {
+        switch (columna.tipo) {
+          case 'estado': return fila.Estado === false ? 'Inactivo' : 'Activo';
+          case 'lista': return this.lista(fila, columna).join(', ');
+          case 'opcion': return this.textoOpcion(fila, columna);
+          default: return columna.formato ? columna.formato(fila) : fila[columna.campo];
+        }
+      },
+    })));
   }
 
   // ---------- Ayudas para la plantilla ----------

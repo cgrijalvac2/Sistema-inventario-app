@@ -4,7 +4,7 @@
       <span class="icono"><mat-icon>{{ info().icono }}</mat-icon></span>
       <div>
         <h1>{{ info().titulo }}</h1>
-        <p>{{ info().subtitulo }} · <strong>{{ almacen()?.Nombre ?? 'Sin almacén' }}</strong></p>
+        <p>{{ info().subtitulo }} · <strong>{{ nombreAlmacen() }}</strong></p>
       </div>
     </div>
     <div class="acciones">
@@ -67,6 +67,11 @@
                     <mat-option [value]="idDe(t)">{{ t.Nombre }} <span class="texto-suave">· {{ t.NIT }}</span></mat-option>
                   }
                 </mat-select>
+                @if (modo() === 'VENTA') {
+                  <button mat-icon-button matSuffix matTooltip="Crear cliente nuevo" (click)="nuevoCliente(); $event.stopPropagation()">
+                    <mat-icon>person_add</mat-icon>
+                  </button>
+                }
               </mat-form-field>
             }
 
@@ -95,6 +100,26 @@
               </mat-form-field>
             }
 
+            @if (esNotaCredito()) {
+              <mat-form-field>
+                <mat-label>Razón de la nota de crédito</mat-label>
+                <mat-select [value]="razonNota()" (selectionChange)="elegirRazon($event.value)">
+                  @for (r of razonesNota(); track r.texto) {
+                    <mat-option [value]="r.texto">{{ r.texto }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+
+              <div class="mueve-inventario">
+                <mat-slide-toggle [checked]="devuelveInventario()" (change)="devuelveInventario.set($event.checked)" [disabled]="!razonNota()">
+                  {{ modo() === 'NOTA_CLIENTE' ? 'El producto regresa al inventario' : 'El producto sale del inventario (se devuelve al proveedor)' }}
+                </mat-slide-toggle>
+                <small class="texto-suave">
+                  {{ devuelveInventario() ? 'Se registrará el movimiento en el kardex.' : 'Solo se devuelve el dinero; el inventario no cambia.' }}
+                </small>
+              </div>
+            }
+
             @if (!esAjuste()) {
               <mat-form-field>
                 <mat-label>Referencia</mat-label>
@@ -117,7 +142,9 @@
           <app-buscador-producto
             [productos]="productosBuscables()"
             [deshabilitado]="cargando() || (esNota() && !origen())"
-            [etiqueta]="esNota() && !origen() ? 'Primero elija el documento que se corrige' : 'Agregar producto (buscar por código o nombre)'"
+            [etiqueta]="esNota() && !origen() ? 'Primero elija el documento que se corrige'
+                      : modo() === 'VENTA' ? 'Agregar producto con existencia (buscar por código o nombre)'
+                      : 'Agregar producto (buscar por código o nombre)'"
             (seleccionar)="agregar($event)" />
 
           @if (lineas().length > 0) {
@@ -199,7 +226,7 @@
         }
         <div class="fila"><span>Productos</span><strong>{{ lineas().length }}</strong></div>
         <hr />
-        <div class="fila"><span>Subtotal</span><span class="monto">{{ subtotal() | moneda }}</span></div>
+        <div class="fila"><span>{{ esAjuste() ? 'Subtotal' : 'Subtotal (sin IVA)' }}</span><span class="monto">{{ subtotal() | moneda }}</span></div>
         @if (!esAjuste()) {
           <div class="fila"><span>Descuento</span><span class="monto">- {{ descuento() | moneda }}</span></div>
           <div class="fila"><span>IVA ({{ porcentajeIva() }}%)</span><span class="monto">{{ impuesto() | moneda }}</span></div>

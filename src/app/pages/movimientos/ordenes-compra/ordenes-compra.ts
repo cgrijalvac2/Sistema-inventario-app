@@ -17,6 +17,7 @@ import { NotificacionService } from '../../../core/services/notificacion.service
 import { PIPES_FORMATO } from '../../../core/pipes/formato.pipes';
 import { OrdenCompra } from '../../../core/models/modelos';
 import { ConfirmarDialog } from '../../../shared/confirmar-dialog/confirmar-dialog';
+import { exportarExcel } from '../../../shared/exportar-excel';
 import { ESTADOS_CLASE } from '../tipos';
 
 @Component({
@@ -98,6 +99,25 @@ export class OrdenesCompra implements OnInit, AfterViewInit {
         this.cargar();
       });
     });
+  }
+
+  // Exporta las órdenes filtradas en el orden de la tabla
+  protected exportar(): void {
+    const sort = this.sort();
+    const filas = sort ? this.datos.sortData(this.datos.filteredData.slice(), sort) : this.datos.filteredData;
+    exportarExcel('ordenes-de-compra', filas, [
+      { titulo: 'Orden', valor: o => o.NumeroOrden },
+      { titulo: 'Fecha', valor: o => o.FechaOrden },
+      { titulo: 'Proveedor', valor: o => o.Proveedor },
+      { titulo: 'Almacén', valor: o => o.Almacen },
+      { titulo: 'Fecha esperada', valor: o => o.FechaEsperada },
+      { titulo: 'Subtotal', valor: o => o.Subtotal },
+      { titulo: 'IVA', valor: o => o.Impuesto },
+      { titulo: 'Total', valor: o => o.Total },
+      { titulo: 'Estado', valor: o => o.Estado },
+      { titulo: 'Creada por', valor: o => o.Usuario },
+      { titulo: 'Observaciones', valor: o => o.Observaciones },
+    ]);
   }
 
   protected abierta(orden: OrdenCompra): boolean {

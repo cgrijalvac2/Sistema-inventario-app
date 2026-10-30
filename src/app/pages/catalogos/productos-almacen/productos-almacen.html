@@ -8,6 +8,9 @@
       </div>
     </div>
     <div class="acciones">
+      <button mat-stroked-button (click)="exportar()" [disabled]="datos.filteredData.length === 0">
+        <mat-icon>download</mat-icon> Exportar a Excel
+      </button>
       <button mat-flat-button (click)="agregar()" [disabled]="!almacen()">
         <mat-icon>add</mat-icon> Agregar productos
       </button>

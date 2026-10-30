@@ -64,7 +64,7 @@ export const routes: Routes = [
         loadComponent: () => import('./pages/reportes/existencias/existencias').then(m => m.Existencias),
       },
       {
-        path: 'reportes/kardex', title: 'Kardex', data: { permisos: ['REPORTES'] },
+        path: 'reportes/kardex', title: 'Reportería general', data: { permisos: ['REPORTES'] },
         loadComponent: () => import('./pages/reportes/kardex/kardex').then(m => m.Kardex),
       },
       {
